@@ -1,0 +1,499 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color: #111827;
+    background: #f8fafc;
+    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  }
+
+  body {
+    @apply m-0 min-w-80 bg-slate-50 text-lg leading-8 text-slate-900 antialiased;
+  }
+
+  a {
+    @apply text-inherit no-underline;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  h1 {
+    @apply mb-4 text-4xl font-extrabold leading-tight tracking-normal text-slate-950;
+  }
+
+  h2 {
+    @apply mb-3 text-2xl font-extrabold leading-tight tracking-normal text-slate-950;
+  }
+
+  h3 {
+    @apply mb-3 mt-7 text-xl font-extrabold leading-snug tracking-normal text-slate-950;
+  }
+
+  label {
+    @apply grid gap-2 text-lg font-bold text-slate-900;
+  }
+
+  input,
+  select,
+  textarea {
+    @apply min-h-14 w-full rounded-lg border-2 border-slate-400 bg-white px-4 py-3 text-xl text-slate-950 outline-none transition;
+  }
+
+  input:focus,
+  select:focus,
+  textarea:focus {
+    @apply border-blue-700 ring-4 ring-blue-200;
+  }
+
+  table {
+    @apply w-full border-collapse text-lg;
+  }
+
+  th {
+    @apply border-b-2 border-slate-300 px-4 py-4 text-left text-base font-extrabold text-slate-700;
+  }
+
+  td {
+    @apply border-b border-slate-200 px-4 py-4 align-middle text-slate-900;
+  }
+}
+
+@layer components {
+  .app {
+    @apply min-h-screen bg-slate-50;
+  }
+
+  .topbar {
+    @apply sticky top-0 z-10 flex min-h-20 flex-wrap items-center gap-4 border-b border-slate-300 bg-white px-6 py-4 shadow-sm;
+  }
+
+  .brand {
+    @apply flex items-center gap-3 whitespace-nowrap text-2xl font-black text-slate-950;
+  }
+
+  .brand svg {
+    @apply text-red-700;
+  }
+
+  .nav {
+    @apply flex flex-1 items-center gap-2 overflow-x-auto py-1;
+  }
+
+  .nav a {
+    @apply box-border whitespace-nowrap rounded-lg border-2 border-transparent px-4 py-3 text-lg font-bold text-slate-700 transition hover:bg-blue-50 hover:text-blue-800;
+  }
+
+  .nav a.active {
+    @apply border-blue-800 bg-blue-100 text-blue-950;
+  }
+
+  .auth-actions {
+    @apply ml-auto flex items-center gap-3;
+  }
+
+  .main {
+    @apply mx-auto max-w-7xl px-6 py-8;
+  }
+
+  .panel {
+    @apply rounded-lg border-2 border-slate-300 bg-white p-7 shadow-sm;
+  }
+
+  .muted {
+    @apply text-xl leading-8 text-slate-700;
+  }
+
+  .page-grid {
+    @apply grid gap-6 lg:grid-cols-[minmax(340px,0.9fr)_minmax(420px,1.1fr)];
+  }
+
+  .content-narrow {
+    @apply mx-auto max-w-3xl;
+  }
+
+  .lookup-form,
+  .form-grid,
+  .auth-card {
+    @apply grid gap-5;
+  }
+
+  .button {
+    @apply inline-flex min-h-14 cursor-pointer items-center justify-center gap-3 rounded-lg border-2 border-transparent px-6 py-3 text-xl font-extrabold transition focus:outline-none focus:ring-4 focus:ring-blue-200 disabled:cursor-wait disabled:opacity-60;
+  }
+
+  .button.primary {
+    @apply bg-blue-800 text-white hover:bg-blue-900;
+  }
+
+  .button.ghost {
+    @apply border-slate-400 bg-white text-slate-900 hover:bg-slate-100;
+  }
+
+  .button.small {
+    @apply min-h-12 px-4 py-2 text-lg;
+  }
+
+  .icon-button {
+    @apply inline-flex h-14 w-14 cursor-pointer items-center justify-center rounded-lg border-2 border-slate-400 bg-white text-slate-800 hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-blue-200;
+  }
+
+  .user-chip {
+    @apply max-w-72 overflow-hidden text-ellipsis whitespace-nowrap rounded-full border-2 border-slate-300 bg-slate-100 px-4 py-2 text-base font-bold text-slate-900;
+  }
+
+  .result-panel {
+    @apply min-h-96;
+  }
+
+  .empty-state {
+    @apply grid min-h-72 place-content-center gap-3 rounded-lg border-2 border-dashed border-slate-400 bg-slate-50 p-8 text-center text-xl text-slate-700;
+  }
+
+  .empty-state strong {
+    @apply block text-2xl font-extrabold text-slate-950;
+  }
+
+  .result-header {
+    @apply flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between;
+  }
+
+  .result-card {
+    @apply rounded-lg border-2 border-slate-300 bg-white p-6;
+  }
+
+  .result-card.lookup-risk-low {
+    @apply border-emerald-300 bg-emerald-50;
+  }
+
+  .result-card.lookup-risk-medium {
+    @apply border-amber-300 bg-amber-50;
+  }
+
+  .result-card.lookup-risk-high {
+    @apply border-red-300 bg-red-50;
+  }
+
+  .result-card.lookup-risk-critical {
+    @apply border-red-900 bg-red-100;
+  }
+
+  .eyebrow {
+    @apply text-base font-extrabold uppercase tracking-normal text-slate-700;
+  }
+
+  .risk,
+  .status {
+    @apply inline-flex rounded-full px-4 py-2 text-base font-extrabold;
+  }
+
+  .risk-low {
+    @apply bg-emerald-100 text-emerald-900 ring-2 ring-emerald-300;
+  }
+
+  .risk-medium {
+    @apply bg-amber-100 text-amber-950 ring-2 ring-amber-300;
+  }
+
+  .risk-high {
+    @apply bg-red-100 text-red-900 ring-2 ring-red-300;
+  }
+
+  .risk-critical {
+    @apply bg-red-900 text-white ring-2 ring-red-950;
+  }
+
+  .metric-grid {
+    @apply mt-5 grid gap-4 md:grid-cols-3;
+  }
+
+  .metric-grid div,
+  .metric-card {
+    @apply rounded-lg border-2 border-slate-300 bg-slate-50 p-5;
+  }
+
+  .metric-grid span,
+  .metric-card span,
+  .detail-list span {
+    @apply block text-lg font-bold text-slate-700;
+  }
+
+  .metric-grid strong,
+  .metric-card strong {
+    @apply mt-1 block text-3xl font-black text-slate-950;
+  }
+
+  .tag-row {
+    @apply flex flex-wrap gap-3;
+  }
+
+  .tag {
+    @apply rounded-full border-2 border-blue-300 bg-blue-50 px-4 py-2 text-lg font-bold text-blue-900;
+  }
+
+  .auth-page {
+    @apply grid justify-center;
+  }
+
+  .auth-card {
+    @apply w-[min(460px,calc(100vw-32px))];
+  }
+
+  .form-error {
+    @apply rounded-lg border-2 border-red-300 bg-red-50 px-4 py-3 text-lg font-bold text-red-900;
+  }
+
+  .success-box {
+    @apply rounded-lg border-2 border-emerald-300 bg-emerald-50 px-4 py-3 text-lg font-bold text-emerald-900;
+  }
+
+  .call-alert-result {
+    @apply grid gap-4 rounded-lg border-2 border-blue-300 bg-blue-50 p-5 text-xl leading-8 text-slate-950;
+  }
+
+  .two-cols {
+    @apply grid gap-5 md:grid-cols-2;
+  }
+
+  .table-wrap {
+    @apply overflow-x-auto rounded-lg border-2 border-slate-300;
+  }
+
+  .status-pending {
+    @apply bg-amber-100 text-amber-950 ring-2 ring-amber-300;
+  }
+
+  .status-approved {
+    @apply bg-emerald-100 text-emerald-900 ring-2 ring-emerald-300;
+  }
+
+  .status-rejected {
+    @apply bg-red-100 text-red-900 ring-2 ring-red-300;
+  }
+
+  .stats-metrics {
+    @apply mb-6 mt-0 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5;
+  }
+
+  .chart-grid {
+    @apply grid gap-6 xl:grid-cols-2;
+  }
+
+  .chart-panel {
+    @apply min-w-0;
+  }
+
+  .trend-summary-grid {
+    @apply mb-4 grid gap-3 sm:grid-cols-2;
+  }
+
+  .trend-summary-grid div {
+    @apply rounded-lg border-2 border-slate-300 bg-slate-50 p-4;
+  }
+
+  .trend-summary-grid span {
+    @apply block text-base font-bold text-slate-700;
+  }
+
+  .trend-summary-grid strong {
+    @apply mt-1 block text-2xl font-black text-slate-950;
+  }
+
+  .trend-day-list {
+    @apply mt-4 rounded-lg border-2 border-slate-300 bg-slate-50 p-4;
+  }
+
+  .trend-day-list > strong {
+    @apply block text-xl font-black text-slate-950;
+  }
+
+  .trend-day-list ul {
+    @apply mt-3 grid gap-2;
+  }
+
+  .trend-day-list li {
+    @apply flex items-center justify-between gap-4 rounded-lg bg-white px-4 py-3 text-lg text-slate-900;
+  }
+
+  .trend-day-list li strong {
+    @apply whitespace-nowrap text-red-800;
+  }
+
+  .warning-guide {
+    @apply mt-6 grid gap-6;
+  }
+
+  .warning-pattern-grid {
+    @apply grid gap-5 lg:grid-cols-2;
+  }
+
+  .warning-pattern-card {
+    @apply rounded-lg border-2 border-amber-300 bg-amber-50 p-6 text-slate-950;
+  }
+
+  .warning-pattern-card h3 {
+    @apply mt-0 text-2xl text-slate-950;
+  }
+
+  .warning-pattern-card strong {
+    @apply font-black text-slate-950;
+  }
+
+  .warning-pattern-card ul {
+    @apply my-3 list-disc space-y-2 pl-7 text-xl leading-8 text-slate-900;
+  }
+
+  .warning-pattern-card p {
+    @apply mt-4 rounded-lg border-2 border-emerald-300 bg-white p-4 text-xl leading-8 text-slate-950;
+  }
+
+  .alert-history-grid {
+    @apply mt-6 grid gap-5 lg:grid-cols-2;
+  }
+
+  .alert-history-card {
+    @apply grid gap-4 rounded-lg border-2 border-slate-300 bg-slate-50 p-6 text-xl leading-8 text-slate-950;
+  }
+
+  .combined-history-grid {
+    @apply mt-6 grid gap-6;
+  }
+
+  .combined-history-card {
+    @apply grid gap-5 rounded-lg border-2 border-slate-300 bg-white p-6 text-xl leading-8 text-slate-950 shadow-sm;
+  }
+
+  .combined-history-card.history-risk-low {
+    @apply border-emerald-300 bg-emerald-50;
+  }
+
+  .combined-history-card.history-risk-medium {
+    @apply border-amber-300 bg-amber-50;
+  }
+
+  .combined-history-card.history-risk-high {
+    @apply border-red-300 bg-red-50;
+  }
+
+  .combined-history-card.history-risk-critical {
+    @apply border-red-900 bg-red-100;
+  }
+
+  .combined-history-card.history-risk-critical .system-suggestion {
+    @apply border-red-900 bg-red-900 text-white;
+  }
+
+  .combined-history-card.history-risk-critical .system-suggestion h3,
+  .combined-history-card.history-risk-critical .system-suggestion p {
+    @apply text-white;
+  }
+
+  .combined-history-card.history-risk-critical .system-suggestion p {
+    @apply bg-red-800;
+  }
+
+  .history-section {
+    @apply grid gap-4 rounded-lg border-2 border-slate-200 bg-slate-50 p-5;
+  }
+
+  .history-section h3 {
+    @apply m-0 text-2xl font-black text-slate-950;
+  }
+
+  .history-text-box {
+    @apply rounded-lg border-2 border-slate-200 bg-white p-4;
+  }
+
+  .history-text-box strong {
+    @apply block text-lg font-black text-slate-950;
+  }
+
+  .history-text-box p {
+    @apply mt-2 text-xl leading-8 text-slate-900;
+  }
+
+  .system-suggestion {
+    @apply border-blue-300 bg-blue-50;
+  }
+
+  .system-suggestion p {
+    @apply rounded-lg bg-white p-4 text-xl leading-8 text-slate-950;
+  }
+
+  .call-report-grid {
+    @apply mt-6 grid gap-5;
+  }
+
+  .call-report-card {
+    @apply grid gap-4 rounded-lg border-2 border-slate-300 bg-white p-6 text-xl leading-8 text-slate-950 shadow-sm;
+  }
+
+  .call-report-card strong {
+    @apply block text-xl font-black text-slate-950;
+  }
+
+  .call-report-card p {
+    @apply mt-2 rounded-lg border-2 border-slate-200 bg-slate-50 p-4 text-slate-900;
+  }
+
+  .call-report-meta {
+    @apply flex flex-wrap gap-3;
+  }
+
+  .call-report-meta span {
+    @apply rounded-full border-2 border-slate-300 bg-slate-50 px-4 py-2 text-base font-bold text-slate-800;
+  }
+
+  .detail-list {
+    @apply grid gap-4;
+  }
+
+  .detail-list div {
+    @apply border-b border-slate-300 pb-4;
+  }
+
+  .detail-list strong {
+    @apply text-xl font-extrabold text-slate-950;
+  }
+
+  .actions-cell {
+    @apply flex flex-wrap gap-3;
+  }
+
+  .admin-layout {
+    @apply grid gap-6;
+  }
+
+  .page-note {
+    @apply p-6 text-xl text-slate-800;
+  }
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    @apply items-start px-4;
+  }
+
+  .nav {
+    @apply order-3 w-full;
+  }
+
+  .auth-actions {
+    @apply ml-0 w-full;
+  }
+
+  .auth-actions .button,
+  .user-chip {
+    @apply flex-1;
+  }
+
+  .main {
+    @apply px-4 py-6;
+  }
+}
