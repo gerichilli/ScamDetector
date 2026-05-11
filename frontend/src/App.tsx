@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet } from "react-router-dom";
 import { LogOut, ShieldAlert } from "lucide-react";
 import { useAuth } from "./state/auth";
+import { ChatbotWidget } from "./components/ChatbotWidget";
 
 export function App() {
   const { user, logout } = useAuth();
@@ -38,6 +39,7 @@ export function App() {
       <main className="main">
         <Outlet />
       </main>
+      <ChatbotWidget />
     </div>
   );
 }
