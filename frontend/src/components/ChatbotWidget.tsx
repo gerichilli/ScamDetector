@@ -90,7 +90,18 @@ export function ChatbotWidget() {
         onClick={() => setIsOpen((current) => !current)}
         aria-label={isOpen ? "Đóng trợ lý chat" : "Mở trợ lý chat"}
       >
-        {isOpen ? <X size={30} /> : <MessageCircle size={32} />}
+        {isOpen ? (
+          <X size={30} />
+        ) : (
+          <>
+            <span className="chatbot-fab-pulse" aria-hidden="true" />
+            <MessageCircle size={32} />
+            <span>
+              <strong>Hỏi trợ lý</strong>
+              <small>Cần giúp về lừa đảo?</small>
+            </span>
+          </>
+        )}
       </button>
     </div>
   );
