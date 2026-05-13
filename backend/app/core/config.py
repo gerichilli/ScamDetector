@@ -1,18 +1,23 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+DEFAULT_DATABASE_URL = f"sqlite:///{BACKEND_DIR / 'scam_warning.db'}"
+DEFAULT_UPLOAD_DIR = str(BACKEND_DIR / "uploads")
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_name: str = "Scam Warning Platform"
-    database_url: str = "sqlite:///./scam_warning.db"
+    database_url: str = DEFAULT_DATABASE_URL
     secret_key: str = "dev-secret-change-me"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24
     cors_origins: str = "http://localhost:5173"
-    upload_dir: str = "uploads"
+    upload_dir: str = DEFAULT_UPLOAD_DIR
 
     @property
     def cors_origin_list(self) -> list[str]:
