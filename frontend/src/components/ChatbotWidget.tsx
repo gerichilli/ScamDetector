@@ -1,17 +1,19 @@
-import { BotMessageSquare, MessageCircle, Send, X } from "lucide-react";
-import { FormEvent, useState } from "react";
+import { BotMessageSquare, MessageCircle, Send, Upload, X } from "lucide-react";
+import { FormEvent, useEffect, useRef, useState } from "react";
+import { recognize } from "tesseract.js";
 
 type ChatMessage = {
   id: number;
   role: "assistant" | "user";
   content: string;
+  tone?: "danger" | "warning" | "safe";
 };
 
 const initialMessages: ChatMessage[] = [
   {
     id: 1,
     role: "assistant",
-    content: "Chào bác ạ. Cháu là trợ lý cảnh báo lừa đảo. Bác có thể nhập câu hỏi, đội API sẽ kết nối phần trả lời realtime sau.",
+    content: "Chào bác ạ. Cháu là trợ lý cảnh báo lừa đảo. Bác có thể nhập câu hỏi hoặc tình huống cần kiểm tra.",
   },
   {
     id: 2,
@@ -20,26 +22,149 @@ const initialMessages: ChatMessage[] = [
   },
 ];
 
+function getDemoReply(text: string) {
+  const normalized = text.toLowerCase();
+  if (normalized.includes("otp") || normalized.includes("mã xác thực")) {
+    return "NGUY HIỂM: Bác tuyệt đối không đọc mã OTP hoặc mã xác thực cho bất kỳ ai. Nếu đã lỡ đọc, hãy gọi ngân hàng và đổi mật khẩu ngay.";
+  }
+  if (normalized.includes("chuyển tiền") || normalized.includes("chuyển khoản")) {
+    return "CẢNH BÁO: Bác không nên chuyển tiền khi chưa xác minh trực tiếp với người thân, ngân hàng hoặc cơ quan chính thức.";
+  }
+  if (normalized.includes("link") || normalized.includes("đường dẫn") || normalized.includes("nhấp")) {
+    return "ĐÁNG NGHI: Bác không nên bấm vào link lạ. Hãy kiểm tra tên miền, người gửi và hỏi người thân trước khi thao tác.";
+  }
+  if (normalized.includes("trúng thưởng") || normalized.includes("nhận quà") || normalized.includes("đóng phí")) {
+    return "ĐÁNG NGHI: Các yêu cầu đóng phí để nhận quà hoặc trúng thưởng thường là dấu hiệu lừa đảo.";
+  }
+  return "Cháu chưa thấy dấu hiệu lừa đảo rõ ràng, nhưng bác vẫn nên kiểm tra người gửi, số điện thoại, link và không cung cấp thông tin cá nhân.";
+}
+
+function compactText(text: string) {
+  return text.replace(/\s+/g, " ").trim();
+}
+
+function getMessageTone(text: string): ChatMessage["tone"] {
+  const normalized = text.toLowerCase();
+  if (normalized.includes("nguy hiểm") || normalized.includes("khẩn cấp")) {
+    return "danger";
+  }
+  if (normalized.includes("cảnh báo") || normalized.includes("đáng nghi")) {
+    return "warning";
+  }
+  return "safe";
+}
+
+function normalizeDangerText(text: string, tone: ChatMessage["tone"]) {
+  const withoutRedAlert = text.replace(/cảnh báo đỏ\s*:/gi, "NGUY HIỂM:");
+  if (tone === "danger" && !withoutRedAlert.toLowerCase().includes("nguy hiểm")) {
+    return `NGUY HIỂM: ${withoutRedAlert}`;
+  }
+  return withoutRedAlert;
+}
+
+async function analyzeWithBackend(text: string): Promise<Pick<ChatMessage, "content" | "tone">> {
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/v1"}/chat/analyze`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  if (!response.ok) {
+    throw new Error("Analyze API error");
+  }
+
+  const data = await response.json();
+  const reply = data.recommended_action ?? data.summary;
+  if (!reply) {
+    throw new Error("Analyze API empty response");
+  }
+  const tone = data.verdict === "danger" || data.verdict === "warning" || data.verdict === "safe" ? data.verdict : getMessageTone(reply);
+  const normalizedReply = normalizeDangerText(reply, tone);
+  return {
+    content: data.ai_used ? `${normalizedReply}\n\nĐã phân tích bằng AI model.` : normalizedReply,
+    tone,
+  };
+}
+
 export function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
+  const [isReadingImage, setIsReadingImage] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
-  function submit(event: FormEvent) {
+  useEffect(() => {
+    if (!isOpen) return;
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [isOpen, messages]);
+
+  async function submit(event: FormEvent) {
     event.preventDefault();
     const trimmed = input.trim();
     if (!trimmed) return;
-
+    const now = Date.now();
     setMessages((current) => [
       ...current,
-      { id: Date.now(), role: "user", content: trimmed },
-      {
-        id: Date.now() + 1,
-        role: "assistant",
-        content: "Cháu đã ghi nhận câu hỏi của bác. Phần trả lời realtime sẽ hoạt động khi API chatbot được kết nối ạ.",
-      },
+      { id: now, role: "user", content: trimmed },
+      { id: now + 1, role: "assistant", content: "Đang suy nghĩ..." },
     ]);
     setInput("");
+
+    try {
+      const reply = await analyzeWithBackend(trimmed);
+      setMessages((current) => [...current.slice(0, -1), { id: now + 2, role: "assistant", ...reply }]);
+    } catch {
+      const reply = getDemoReply(trimmed);
+      setMessages((current) => [...current.slice(0, -1), { id: now + 3, role: "assistant", content: reply, tone: getMessageTone(reply) }]);
+    }
+  }
+
+  async function handleImageUpload(file: File | null) {
+    if (!file) return;
+    const now = Date.now();
+    setIsReadingImage(true);
+    setMessages((current) => [
+      ...current,
+      { id: now, role: "user", content: `Đã gửi ảnh: ${file.name}` },
+      { id: now + 1, role: "assistant", content: "Đang đọc chữ trong ảnh..." },
+    ]);
+
+    try {
+      const result = await recognize(file, "vie+eng", {
+        logger: (message) => {
+          if (message.status === "recognizing text") {
+            const percent = Math.round(message.progress * 100);
+            setMessages((current) => [
+              ...current.slice(0, -1),
+              { id: now + 1, role: "assistant", content: `Đang đọc chữ trong ảnh... ${percent}%` },
+            ]);
+          }
+        },
+      });
+      const extractedText = compactText(result.data.text);
+      const analysis = extractedText
+        ? await analyzeWithBackend(extractedText).catch(() => {
+            const reply = getDemoReply(extractedText);
+            return { content: reply, tone: getMessageTone(reply) };
+          })
+        : { content: "", tone: "safe" as const };
+      const reply = extractedText
+        ? `Cháu đọc được: "${extractedText}"\n\n${analysis.content}`
+        : "Cháu chưa đọc được chữ rõ ràng trong ảnh này. Bác thử ảnh nét hơn hoặc nhập nội dung tin nhắn vào ô chat giúp cháu.";
+
+      setMessages((current) => [...current.slice(0, -1), { id: now + 2, role: "assistant", content: reply, tone: analysis.tone }]);
+    } catch {
+      setMessages((current) => [
+        ...current.slice(0, -1),
+        {
+          id: now + 3,
+          role: "assistant",
+          content:
+            "Cháu chưa đọc được ảnh này. Bác thử ảnh rõ hơn, hoặc nhập nội dung trong ảnh vào ô chat để cháu kiểm tra ngay.",
+        },
+      ]);
+    } finally {
+      setIsReadingImage(false);
+    }
   }
 
   return (
@@ -56,27 +181,44 @@ export function ChatbotWidget() {
             </button>
           </header>
 
-          <div className="chatbot-api-note">
-            Giao diện đã sẵn sàng. Phần API trả lời realtime sẽ được kết nối sau.
+          <div className="chatbot-messages">
+            {messages.map((message) => {
+              const renderedTone = message.role === "assistant" ? (message.tone ?? getMessageTone(message.content)) : undefined;
+              return (
+                <div
+                  className={`chatbot-message chatbot-message-${message.role} ${renderedTone ? `chatbot-message-${renderedTone}` : ""}`}
+                  key={message.id}
+                >
+                  {message.role === "assistant" && <BotMessageSquare size={20} />}
+                  <p>{message.content}</p>
+                </div>
+              );
+            })}
+            <div ref={messagesEndRef} aria-hidden="true" />
           </div>
 
-          <div className="chatbot-messages">
-            {messages.map((message) => (
-              <div className={`chatbot-message chatbot-message-${message.role}`} key={message.id}>
-                {message.role === "assistant" && <BotMessageSquare size={20} />}
-                <p>{message.content}</p>
-              </div>
-            ))}
+          <div className="chatbot-media-controls">
+            <label className="chatbot-upload">
+              <input
+                type="file"
+                accept="image/*"
+                disabled={isReadingImage}
+                onChange={(e) => {
+                  const f = e.target.files?.[0] ?? null;
+                  handleImageUpload(f);
+                  e.target.value = "";
+                }}
+              />
+              <Upload size={18} />
+              <span>{isReadingImage ? "Đang đọc ảnh..." : "Đọc ảnh"}</span>
+            </label>
           </div>
 
           <form className="chatbot-form" onSubmit={submit}>
-            <label className="sr-only" htmlFor="chatbot-input">Nhập câu hỏi cho trợ lý</label>
-            <input
-              id="chatbot-input"
-              value={input}
-              onChange={(event) => setInput(event.target.value)}
-              placeholder="Bác nhập câu hỏi ở đây..."
-            />
+            <label className="sr-only" htmlFor="chatbot-input">
+              Nhập câu hỏi cho trợ lý
+            </label>
+            <input id="chatbot-input" value={input} onChange={(event) => setInput(event.target.value)} placeholder="Bác nhập câu hỏi ở đây..." />
             <button type="submit" aria-label="Gửi câu hỏi">
               <Send size={22} />
             </button>

@@ -237,5 +237,8 @@ frontend/
 ## Ghi chú
 
 - UC chatbot AI chưa làm trong phase hiện tại.
+- Backend hiện hỗ trợ:
+  - `POST /api/v1/chat/analyze` để phân tích văn bản nhập tay.
+  - `POST /api/v1/chat/analyze-image` để nhận diện text trong ảnh bằng Tesseract OCR.
 - Phần phát hiện rủi ro đang dùng rule-based detector tạm thời.
 - Khi đưa lên production, nên thêm migration Alembic đầy đủ và cấu hình biến môi trường an toàn.

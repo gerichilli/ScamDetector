@@ -286,31 +286,74 @@
   }
 
   .chatbot-messages {
-    @apply flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-50 p-5;
+    @apply flex flex-1 flex-col gap-4 overflow-y-auto bg-slate-100 p-5;
   }
 
   .chatbot-message {
-    @apply flex max-w-[92%] gap-3 rounded-lg border-2 p-4 text-lg leading-7;
+    @apply flex max-w-[92%] gap-3 rounded-2xl border p-4 text-lg leading-7 shadow-sm;
   }
 
   .chatbot-message p {
-    @apply m-0;
+    @apply m-0 whitespace-pre-line;
   }
 
   .chatbot-message-assistant {
-    @apply self-start border-blue-200 bg-white text-slate-950;
+    @apply self-start rounded-bl-md border-slate-200 bg-white text-slate-950;
   }
 
   .chatbot-message-assistant svg {
     @apply mt-1 shrink-0 text-blue-800;
   }
 
+  .chatbot-message-assistant.chatbot-message-danger {
+    @apply border-red-200 bg-red-50 text-red-700;
+    color: #b91c1c !important;
+  }
+
+  .chatbot-message-assistant.chatbot-message-danger p {
+    @apply text-red-700;
+    color: #b91c1c !important;
+  }
+
+  .chatbot-message-assistant.chatbot-message-danger svg {
+    @apply text-red-700;
+    color: #b91c1c !important;
+  }
+
+  .chatbot-message-assistant.chatbot-message-warning {
+    @apply border-amber-200 bg-amber-50 text-amber-950;
+  }
+
+  .chatbot-message-assistant.chatbot-message-warning svg {
+    @apply text-amber-700;
+  }
+
   .chatbot-message-user {
-    @apply self-end border-blue-800 bg-blue-800 text-white;
+    @apply self-end rounded-br-md border-blue-600 bg-blue-600 text-white;
+  }
+
+  .chatbot-message-user p {
+    @apply text-white;
   }
 
   .chatbot-form {
     @apply flex gap-3 border-t-2 border-slate-300 bg-white p-4;
+  }
+
+  .chatbot-media-controls {
+    @apply border-t-2 border-slate-200 bg-white px-4 py-3;
+  }
+
+  .chatbot-upload {
+    @apply inline-flex cursor-pointer items-center gap-2 rounded-lg border-2 border-blue-200 bg-blue-50 px-4 py-2 text-base font-extrabold text-blue-900 transition hover:bg-blue-100;
+  }
+
+  .chatbot-upload input {
+    @apply sr-only;
+  }
+
+  .chatbot-upload:has(input:disabled) {
+    @apply cursor-wait opacity-70;
   }
 
   .chatbot-form input {
@@ -631,5 +674,87 @@
 
   .chatbot-message {
     @apply max-w-full text-base leading-7;
+  }
+}
+
+/* Hard override for Docker/Vite cached chat styles. Keep this last. */
+.chatbot-messages {
+  background: #eef2f7 !important;
+  gap: 14px !important;
+  padding: 20px !important;
+}
+
+.chatbot-message {
+  border-width: 1px !important;
+  border-radius: 18px !important;
+  max-width: 86% !important;
+  padding: 14px 18px !important;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 0.08) !important;
+}
+
+.chatbot-message-assistant {
+  background: #ffffff !important;
+  border-color: #dbe3ee !important;
+  color: #111827 !important;
+  align-self: flex-start !important;
+  margin-right: 48px !important;
+  border-bottom-left-radius: 6px !important;
+}
+
+.chatbot-message-assistant p {
+  color: inherit !important;
+}
+
+.chatbot-message-user {
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  color: #ffffff !important;
+  align-self: flex-end !important;
+  margin-left: 48px !important;
+  border-bottom-right-radius: 6px !important;
+}
+
+.chatbot-message-user p {
+  color: #ffffff !important;
+}
+
+.chatbot-message-assistant.chatbot-message-danger {
+  background: #fef2f2 !important;
+  border-color: #fecaca !important;
+  color: #b91c1c !important;
+}
+
+.chatbot-message-assistant.chatbot-message-danger p,
+.chatbot-message-assistant.chatbot-message-danger svg {
+  color: #b91c1c !important;
+}
+
+.chatbot-message-assistant.chatbot-message-warning {
+  background: #fffbeb !important;
+  border-color: #fde68a !important;
+  color: #92400e !important;
+}
+
+.chatbot-message-assistant.chatbot-message-warning p,
+.chatbot-message-assistant.chatbot-message-warning svg {
+  color: #92400e !important;
+}
+
+@media (max-width: 720px) {
+  .chatbot-messages {
+    padding: 14px !important;
+  }
+
+  .chatbot-message {
+    max-width: 90% !important;
+    padding: 12px 14px !important;
+  }
+
+  .chatbot-message-assistant {
+    margin-right: 28px !important;
+  }
+
+  .chatbot-message-user {
+    margin-left: 28px !important;
   }
 }
