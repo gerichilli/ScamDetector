@@ -68,6 +68,42 @@ SCAM_PATTERNS = [
         "description": "Người gọi hứa lợi nhuận cao, rút tiền nhanh, sau đó yêu cầu bác nạp thêm tiền.",
         "risk_level": "high",
     },
+    {
+        "phone_number": "0977001122",
+        "pattern": "Shipper giả xác nhận đơn hàng",
+        "description": "Shipper yêu cầu mã OTP hoặc thông tin thẻ để xác nhận giao hàng.",
+        "risk_level": "low",
+    },
+    {
+        "phone_number": "0966003344",
+        "pattern": "Giả danh ngân hàng - hỗ trợ kỹ thuật",
+        "description": "Yêu cầu cài app hoặc truy cập link để 'hỗ trợ' tài khoản.",
+        "risk_level": "high",
+    },
+    {
+        "phone_number": "0955007788",
+        "pattern": "Quảng cáo đầu tư lừa đảo",
+        "description": "Lời mời đầu tư qua điện thoại kèm cam kết lợi nhuận cao.",
+        "risk_level": "medium",
+    },
+    {
+        "phone_number": "0944006677",
+        "pattern": "Đòi nợ giả",
+        "description": "Gọi thông báo nợ xấu và yêu cầu chuyển tiền gấp.",
+        "risk_level": "high",
+    },
+    {
+        "phone_number": "0933221100",
+        "pattern": "Giả danh y tế - mời tiêm chủng giả",
+        "description": "Yêu cầu chuyển tiền hoặc cung cấp thông tin cá nhân cho mục đích y tế.",
+        "risk_level": "medium",
+    },
+    {
+        "phone_number": "0922113344",
+        "pattern": "Tin nhắn SMS chuyển thành cuộc gọi lừa đảo",
+        "description": "Gọi tự động từ số lạ, yêu cầu gọi lại số hotline giả.",
+        "risk_level": "low",
+    },
 ]
 
 CALL_SAMPLES = [
@@ -115,6 +151,69 @@ CALL_SAMPLES = [
         "message": "Thưa bác, hiện chưa thấy dấu hiệu lừa đảo rõ ràng.",
         "recommended_action": "Bác vẫn nên cẩn thận, không chia sẻ mã OTP hoặc mật khẩu qua điện thoại ạ.",
         "days_ago": 10,
+    },
+    {
+        "phone_number": "0966003344",
+        "duration_seconds": 210,
+        "transcript": "Chúng tôi phát hiện giao dịch lạ, bác cài app để xác nhận.",
+        "risk_level": "high",
+        "message": "Cuộc gọi yêu cầu cài app/nhập mã, có dấu hiệu lừa đảo.",
+        "recommended_action": "Không cài app theo hướng dẫn, gọi tổng đài chính thức.",
+        "days_ago": 3,
+    },
+    {
+        "phone_number": "0955007788",
+        "duration_seconds": 130,
+        "transcript": "Lời mời đầu tư, cam kết lợi nhuận 30%/tháng.",
+        "risk_level": "medium",
+        "message": "Cuộc gọi có dấu hiệu đầu tư lừa đảo.",
+        "recommended_action": "Không nạp tiền, tham khảo ý kiến chuyên gia tài chính.",
+        "days_ago": 6,
+    },
+    {
+        "phone_number": "0944006677",
+        "duration_seconds": 200,
+        "transcript": "Bác đang nợ, vui lòng chuyển khoản để tránh pháp lý.",
+        "risk_level": "high",
+        "message": "Cuộc gọi đòi nợ giả, không chuyển tiền.",
+        "recommended_action": "Tra cứu thông tin nợ qua cổng chính thức của cơ quan.",
+        "days_ago": 8,
+    },
+    {
+        "phone_number": "0933221100",
+        "duration_seconds": 90,
+        "transcript": "Thông báo tiêm chủng mời đăng ký, yêu cầu cung cấp mã OTP.",
+        "risk_level": "medium",
+        "message": "Có dấu hiệu thu thập thông tin cá nhân.",
+        "recommended_action": "Không cung cấp thông tin cá nhân trên điện thoại.",
+        "days_ago": 12,
+    },
+    {
+        "phone_number": "0922113344",
+        "duration_seconds": 45,
+        "transcript": "Cuộc gọi tự động thông báo, yêu cầu gọi lại hotline.",
+        "risk_level": "low",
+        "message": "Cuộc gọi tự động, thận trọng khi gọi lại số lạ.",
+        "recommended_action": "Không gọi lại số lạ, kiểm tra thông tin qua nguồn chính thức.",
+        "days_ago": 15,
+    },
+    {
+        "phone_number": "0987654321",
+        "duration_seconds": 120,
+        "transcript": "Yêu cầu cung cấp OTP ngay.",
+        "risk_level": "critical",
+        "message": "Đã có nhiều báo cáo cho số này.",
+        "recommended_action": "Không chia sẻ OTP.",
+        "days_ago": 2,
+    },
+    {
+        "phone_number": "0901122334",
+        "duration_seconds": 150,
+        "transcript": "Yêu cầu chuyển tiền để xác minh.",
+        "risk_level": "high",
+        "message": "Nhiều báo cáo giả danh công an.",
+        "recommended_action": "Kiểm tra với cơ quan thật trước khi hành động.",
+        "days_ago": 4,
     },
 ]
 
@@ -264,6 +363,63 @@ def seed_reports(db, user: User) -> None:
         )
 
 
+def generate_many_calls(db, user: User, days: int = 30, per_day: int = 6) -> None:
+    """Generate synthetic calls across the last `days` days to enrich trend data."""
+    now = datetime.now(timezone.utc)
+    # flatten candidates from CALL_SAMPLES and SCAM_PATTERNS
+    candidates = []
+    for s in CALL_SAMPLES:
+        candidates.append({
+            "phone_number": s["phone_number"],
+            "duration_seconds": s.get("duration_seconds", 60),
+            "transcript": s.get("transcript", ""),
+            "risk_level": s.get("risk_level", "low"),
+            "message": s.get("message", ""),
+            "recommended_action": s.get("recommended_action", ""),
+        })
+    for p in SCAM_PATTERNS:
+        candidates.append({
+            "phone_number": p["phone_number"],
+            "duration_seconds": 90,
+            "transcript": p.get("pattern", ""),
+            "risk_level": p.get("risk_level", "low"),
+            "message": p.get("description", ""),
+            "recommended_action": "Không hành động ngay, kiểm tra kỹ thông tin.",
+        })
+
+    import random
+
+    # create a variety of calls each day
+    for d in range(days):
+        day_time = now - timedelta(days=d)
+        for i in range(per_day):
+            sample = random.choice(candidates)
+            call_time = day_time - timedelta(hours=random.randint(0, 23), minutes=random.randint(0, 59))
+            call = CallRecord(
+                elderly_user_id=user.id,
+                phone_number=sample["phone_number"],
+                normalized_phone_number=normalize_entity_value("phone", sample["phone_number"]),
+                call_time=call_time,
+                duration_seconds=sample.get("duration_seconds", 60),
+                transcript=sample.get("transcript", "Dữ liệu cuộc gọi mẫu"),
+                note="Dữ liệu tổng hợp lớn để hiển thị xu hướng 30 ngày.",
+            )
+            db.add(call)
+            db.flush()
+            alert = ScamAlert(
+                call_id=call.id,
+                risk_level=sample.get("risk_level", "low"),
+                message=sample.get("message", ""),
+                recommended_action=sample.get("recommended_action", ""),
+                timestamp=call.call_time,
+            )
+            db.add(alert)
+            db.flush()
+            if sample.get("risk_level") in {"high", "critical"}:
+                db.add(Notification(alert_id=alert.id, target_user_id=user.id, channel="in_app", sent=True))
+
+
+
 def main() -> None:
     Base.metadata.create_all(bind=engine)
     db = SessionLocal()
@@ -275,6 +431,8 @@ def main() -> None:
         seed_calls(db, users["elder@example.com"])
         update_existing_call_samples(db, users["elder@example.com"])
         seed_reports(db, users["elder@example.com"])
+        # generate a larger synthetic dataset for 30-day trends
+        generate_many_calls(db, users["elder@example.com"], days=30, per_day=8)
         db.commit()
         print("Mock database seeded.")
         print("User: elder@example.com / StrongPass123")

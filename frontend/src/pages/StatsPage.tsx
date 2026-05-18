@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { api } from "../api/client";
 
 const scamTypeLabels: Record<string, string> = {
@@ -51,6 +51,13 @@ type TrendChartItem = {
   "đối tượng mới": number;
 };
 
+type ByTypeItem = {
+  scam_type: string;
+  count: number;
+  scam_type_label: string;
+  color: string;
+};
+
 export function StatsPage() {
   const overview = useQuery({
     queryKey: ["stats-overview"],
@@ -72,10 +79,43 @@ export function StatsPage() {
     ["Rủi ro cao", overview.data?.high_risk_entities ?? 0],
     ["Cảnh báo 7 ngày qua", overview.data?.reports_last_7_days ?? 0],
   ];
-  const byTypeData = (byType.data?.items ?? []).map((item: { scam_type: string; count: number }) => ({
+
+  const pieColors = ["#dc2626", "#f59e0b", "#16a34a", "#2563eb", "#8b5cf6", "#ec4899", "#0f766e", "#c026d3", "#475569"];
+
+  const getPieColor = (scamType: string, index: number) => {
+    const mappingIndex = Object.keys(scamTypeLabels).indexOf(scamType);
+    return pieColors[mappingIndex >= 0 ? mappingIndex % pieColors.length : index % pieColors.length];
+  };
+
+  const byTypeData: ByTypeItem[] = (byType.data?.items ?? []).map((item: { scam_type: string; count: number }, index: number) => ({
     ...item,
     scam_type_label: scamTypeLabels[item.scam_type] ?? item.scam_type,
+    color: getPieColor(item.scam_type, index),
   }));
+
+  const totalByType = byTypeData.reduce((s, it) => s + (it.count ?? 0), 0);
+  const byTypeWithPercent = byTypeData.map((it) => ({
+    ...it,
+    percent: totalByType ? Math.round((it.count / totalByType) * 100) : 0,
+  }));
+
+  // Simplify pie: show top N slices and group the rest into "Khác"
+  const TOP_N = 5;
+  const sorted = [...byTypeWithPercent].sort((a, b) => (b.count ?? 0) - (a.count ?? 0));
+  const top = sorted.slice(0, TOP_N);
+  const others = sorted.slice(TOP_N);
+  const othersCount = others.reduce((s, it) => s + (it.count ?? 0), 0);
+  const pieSlices = [...top];
+  if (othersCount > 0) {
+    pieSlices.push({
+      scam_type: "other",
+      scam_type_label: scamTypeLabels["other"],
+      count: othersCount,
+      color: getPieColor("other", TOP_N),
+      percent: totalByType ? Math.round((othersCount / totalByType) * 100) : 0,
+    });
+  }
+
   const trendData: TrendChartItem[] = (trend.data?.items ?? []).map((item: { date: string; reports: number; new_entities: number }) => ({
     ...item,
     date_label: formatShortDate(item.date),
@@ -83,11 +123,18 @@ export function StatsPage() {
     "đối tượng mới": item.new_entities,
   }));
   const trendTotal = trendData.reduce((sum, item) => sum + item.reports, 0);
-  const peakDay = trendData.reduce(
-    (peak, item) => (item.reports > peak.reports ? item : peak),
-    { date: "", date_label: "Chưa có", reports: 0, new_entities: 0, "báo cáo lừa đảo": 0, "đối tượng mới": 0 },
-  );
-  const activeTrendDays = trendData.filter((item) => item.reports > 0).slice(-8).reverse();
+  const peakDay = trendData.reduce((peak, item) => (item.reports > peak.reports ? item : peak), {
+    date: "",
+    date_label: "Chưa có",
+    reports: 0,
+    new_entities: 0,
+    "báo cáo lừa đảo": 0,
+    "đối tượng mới": 0,
+  });
+  const activeTrendDays = trendData
+    .filter((item) => item.reports > 0)
+    .slice(-8)
+    .reverse();
 
   return (
     <section className="stats-page">
@@ -102,15 +149,40 @@ export function StatsPage() {
       <div className="chart-grid">
         <div className="panel chart-panel">
           <h2>Cảnh báo theo hình thức</h2>
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={byTypeData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="scam_type_label" />
-              <YAxis />
-              <Tooltip />
-              <Bar dataKey="count" fill="#2563eb" radius={[4, 4, 0, 0]} />
-            </BarChart>
+          <ResponsiveContainer width="100%" height={320}>
+            <PieChart>
+              <Tooltip formatter={(value: number, name: string) => [value, name]} />
+              <Pie
+                data={pieSlices}
+                dataKey="count"
+                nameKey="scam_type_label"
+                cx="50%"
+                cy="45%"
+                innerRadius={70}
+                outerRadius={110}
+                paddingAngle={4}
+                label={({ percent }) => `${Math.round(percent)}%`}
+                labelLine={false}
+              >
+                {pieSlices.map((entry: any, index: number) => (
+                  <Cell key={`slice-${entry.scam_type}-${index}`} fill={entry.color} />
+                ))}
+              </Pie>
+            </PieChart>
           </ResponsiveContainer>
+
+          <div className="panel pie-legend-table">
+            <strong>Ghi chú</strong>
+            <div className="pie-legend-grid">
+              {pieSlices.map((item: any) => (
+                <div className="pie-legend-row" key={item.scam_type}>
+                  <span className="pie-legend-swatch" style={{ backgroundColor: item.color }} />
+                  <span className="pie-legend-label">{item.scam_type_label}</span>
+                  <strong>{item.percent}%</strong>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="panel chart-panel">
           <h2>Xu hướng 30 ngày</h2>
@@ -156,9 +228,7 @@ export function StatsPage() {
         <div>
           <span className="eyebrow">Rút kinh nghiệm</span>
           <h2>Các kiểu lừa đảo thường gặp</h2>
-          <p className="muted">
-            Đọc các dấu hiệu dưới đây trước khi chuyển tiền, bấm vào link lạ, hoặc cung cấp mã OTP.
-          </p>
+          <p className="muted">Đọc các dấu hiệu dưới đây trước khi chuyển tiền, bấm vào link lạ, hoặc cung cấp mã OTP.</p>
         </div>
         <div className="warning-pattern-grid">
           {warningPatterns.map((pattern) => (
