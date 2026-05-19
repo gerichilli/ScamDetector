@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { FormEvent } from "react";
+import { FormEvent, useState } from "react";
 import { api } from "../api/client";
 import type { Page, ReportListItem, RiskLevel } from "../api/types";
 import { EmptyState } from "../components/EmptyState";
+import { validatePhone, validateRequiredText } from "../utils/validation";
 
 type ScamDatabaseEntry = {
   id: string;
@@ -15,6 +16,7 @@ type ScamDatabaseEntry = {
 
 export function AdminPage() {
   const client = useQueryClient();
+  const [entryError, setEntryError] = useState("");
   const reports = useQuery({
     queryKey: ["admin-reports"],
     queryFn: async () => (await api.get<Page<ReportListItem>>("/admin/reports", { params: { status: "pending" } })).data,
@@ -40,12 +42,33 @@ export function AdminPage() {
     },
     onSuccess: (_, form) => {
       form.reset();
+      setEntryError("");
       client.invalidateQueries({ queryKey: ["scam-database"] });
     },
   });
 
   function submitEntry(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    setEntryError("");
+    const data = new FormData(event.currentTarget);
+    const phoneNumber = String(data.get("phone_number") || "").trim();
+    if (phoneNumber) {
+      const phoneValidation = validatePhone(phoneNumber, "Số điện thoại nghi ngờ");
+      if (!phoneValidation.valid) {
+        setEntryError(phoneValidation.message ?? "Số điện thoại không hợp lệ.");
+        return;
+      }
+    }
+    const patternValidation = validateRequiredText(String(data.get("pattern") || ""), "Kiểu lừa đảo", 2);
+    if (!patternValidation.valid) {
+      setEntryError(patternValidation.message ?? "Kiểu lừa đảo không hợp lệ.");
+      return;
+    }
+    const descriptionValidation = validateRequiredText(String(data.get("description") || ""), "Mô tả", 5);
+    if (!descriptionValidation.valid) {
+      setEntryError(descriptionValidation.message ?? "Mô tả không hợp lệ.");
+      return;
+    }
     createEntry.mutate(event.currentTarget);
   }
 
@@ -53,10 +76,10 @@ export function AdminPage() {
     <section className="admin-layout">
       <div className="panel">
         <h1>Quản trị dữ liệu lừa đảo</h1>
-        <form className="form-grid" onSubmit={submitEntry}>
+        <form className="form-grid" onSubmit={submitEntry} noValidate>
           <label>Số điện thoại nghi ngờ<input name="phone_number" placeholder="Có thể bỏ trống nếu chỉ thêm mẫu lừa đảo" /></label>
-          <label>Kiểu lừa đảo<input name="pattern" required placeholder="VD: Giả danh ngân hàng xin mã OTP" /></label>
-          <label>Mô tả dễ hiểu<textarea name="description" required rows={4} /></label>
+          <label>Kiểu lừa đảo<input name="pattern" placeholder="VD: Giả danh ngân hàng xin mã OTP" aria-invalid={!!entryError} /></label>
+          <label>Mô tả dễ hiểu<textarea name="description" rows={4} aria-invalid={!!entryError} /></label>
           <label>Mức rủi ro
             <select name="risk_level" defaultValue="medium">
               <option value="low">Thấp</option>
@@ -65,6 +88,7 @@ export function AdminPage() {
               <option value="critical">Rất nguy hiểm</option>
             </select>
           </label>
+          {entryError && <div className="form-error">{entryError}</div>}
           {createEntry.isError && <div className="form-error">Không thể thêm dữ liệu lừa đảo.</div>}
           <button className="button primary" type="submit" disabled={createEntry.isPending}>
             {createEntry.isPending ? "Đang lưu" : "Thêm vào kho dữ liệu"}

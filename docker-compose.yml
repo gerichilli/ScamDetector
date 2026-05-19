@@ -17,8 +17,8 @@ services:
       DATABASE_URL: postgresql+psycopg://scam_user:scam_password@db:5432/scam_warning
       SECRET_KEY: change-me-in-production
       CORS_ORIGINS: http://localhost:5173
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
     ports:
       - "8000:8000"
     depends_on:

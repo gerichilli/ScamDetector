@@ -21,7 +21,7 @@ export function MyReportsPage() {
       {!!data?.items.length && (
         <div className="call-report-grid">
           {data.items.map((item) => (
-            <article className="call-report-card" key={item.call_id}>
+            <article className={`call-report-card history-risk-${item.risk_level}`} key={item.call_id}>
               <div className="result-header">
                 <div>
                   <span className="eyebrow">Số bác đã báo</span>
@@ -32,7 +32,7 @@ export function MyReportsPage() {
               <div className="call-report-meta">
                 <span>{new Date(item.call_time).toLocaleString("vi-VN")}</span>
                 <span>{item.duration_seconds ? `${item.duration_seconds} giây` : "Chưa nhập thời lượng"}</span>
-                <span>{item.status}</span>
+                <span className={`status status-${item.status}`}>{item.status}</span>
               </div>
               <div>
                 <strong>Nội dung bác đã ghi lại</strong>

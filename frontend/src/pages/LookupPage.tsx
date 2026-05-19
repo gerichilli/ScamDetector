@@ -5,6 +5,7 @@ import { api } from "../api/client";
 import type { LookupResponse } from "../api/types";
 import { EmptyState } from "../components/EmptyState";
 import { RiskBadge } from "../components/RiskBadge";
+import { validateLookupValue } from "../utils/validation";
 
 const entityTypeLabels: Record<string, string> = {
   phone: "Số điện thoại",
@@ -35,16 +36,23 @@ const scamTypeLabels: Record<string, string> = {
 export function LookupPage() {
   const [type, setType] = useState("phone");
   const [value, setValue] = useState("");
+  const [formError, setFormError] = useState("");
 
   const lookup = useMutation({
     mutationFn: async () => {
-      const response = await api.get<LookupResponse>("/lookup", { params: { type, value } });
+      const response = await api.get<LookupResponse>("/lookup", { params: { type, value: value.trim() } });
       return response.data;
     },
   });
 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
+    setFormError("");
+    const validation = validateLookupValue(type, value);
+    if (!validation.valid) {
+      setFormError(validation.message ?? "Dữ liệu tra cứu không hợp lệ.");
+      return;
+    }
     lookup.mutate();
   }
 
@@ -53,10 +61,16 @@ export function LookupPage() {
       <div className="panel lookup-panel">
         <h1>Tra cứu cảnh báo lừa đảo</h1>
         <p className="muted">Kiểm tra nhanh số điện thoại, tài khoản ngân hàng, ví điện tử hoặc tài khoản mạng xã hội.</p>
-        <form className="lookup-form" onSubmit={onSubmit}>
+        <form className="lookup-form" onSubmit={onSubmit} noValidate>
           <label>
             Loại đối tượng
-            <select value={type} onChange={(event) => setType(event.target.value)}>
+            <select
+              value={type}
+              onChange={(event) => {
+                setType(event.target.value);
+                setFormError("");
+              }}
+            >
               <option value="phone">Số điện thoại</option>
               <option value="bank_account">Tài khoản ngân hàng</option>
               <option value="e_wallet">Ví điện tử</option>
@@ -65,8 +79,18 @@ export function LookupPage() {
           </label>
           <label>
             Giá trị cần tra cứu
-            <input value={value} onChange={(event) => setValue(event.target.value)} placeholder="VD: 0987654321" required />
+            <input
+              value={value}
+              onChange={(event) => {
+                setValue(event.target.value);
+                setFormError("");
+              }}
+              placeholder="VD: 0987654321"
+              aria-invalid={!!formError}
+            />
           </label>
+          {formError && <div className="form-error">{formError}</div>}
+          {lookup.isError && <div className="form-error">Không thể tra cứu ngay bây giờ. Vui lòng thử lại sau.</div>}
           <button className="button primary" type="submit" disabled={lookup.isPending}>
             <Search size={18} />
             {lookup.isPending ? "Đang tra cứu" : "Tra cứu"}
@@ -91,7 +115,10 @@ export function LookupPage() {
             <div className="metric-grid">
               <div><span>Báo cáo</span><strong>{lookup.data.entity.report_count}</strong></div>
               <div><span>Đã duyệt</span><strong>{lookup.data.entity.verified_report_count}</strong></div>
-              <div><span>Trạng thái</span><strong>{statusLabels[lookup.data.entity.status] ?? "Chưa rõ"}</strong></div>
+              <div className={`status-card status-${lookup.data.entity.status}`}>
+                <span>Trạng thái</span>
+                <strong>{statusLabels[lookup.data.entity.status] ?? "Chưa rõ"}</strong>
+              </div>
             </div>
             <h3>Loại lừa đảo phổ biến</h3>
             <div className="tag-row">

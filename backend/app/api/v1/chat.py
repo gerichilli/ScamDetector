@@ -17,7 +17,7 @@ router = APIRouter()
 async def analyze(request: TextAnalysisRequest, db: Session = Depends(get_db)) -> Any:
     """Analyze free text for scam indicators, using AI when configured."""
     settings = get_settings()
-    result = await analyze_text_with_ai(request.text, settings.openai_api_key, settings.openai_model)
+    result = await analyze_text_with_ai(request.text, settings.gemini_api_key, settings.gemini_model)
     return TextAnalysisResponse(
         verdict=result["verdict"],
         summary=result["summary"],
@@ -52,7 +52,7 @@ async def analyze_image(file: UploadFile = File(...), db: Session = Depends(get_
         if not text.strip():
             raise HTTPException(status_code=422, detail="No text detected in image")
         settings = get_settings()
-        result = await analyze_text_with_ai(text, settings.openai_api_key, settings.openai_model)
+        result = await analyze_text_with_ai(text, settings.gemini_api_key, settings.gemini_model)
         return TextAnalysisResponse(
             verdict=result["verdict"],
             summary=result["summary"],

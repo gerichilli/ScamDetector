@@ -35,7 +35,7 @@ export function HistoryPage() {
                 <div className="call-report-meta">
                   <span>{new Date(item.call_time).toLocaleString("vi-VN")}</span>
                   <span>{item.duration_seconds ? `${item.duration_seconds} giây` : "Chưa nhập thời lượng"}</span>
-                  <span>{item.status}</span>
+                  <span className={`status status-${item.status}`}>{item.status}</span>
                 </div>
                 <div className="history-text-box">
                   <strong>Nội dung bác đã ghi lại</strong>

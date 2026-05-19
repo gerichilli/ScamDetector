@@ -18,8 +18,8 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 60 * 24
     cors_origins: str = "http://localhost:5173,http://localhost:5174"
     upload_dir: str = DEFAULT_UPLOAD_DIR
-    openai_api_key: str = ""
-    openai_model: str = "gpt-4.1-mini"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.0-flash"
 
     @property
     def cors_origin_list(self) -> list[str]:

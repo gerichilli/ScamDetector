@@ -1,4 +1,4 @@
-import { BotMessageSquare, MessageCircle, Send, Upload, X } from "lucide-react";
+import { Bot, BotMessageSquare, Send, Upload, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { recognize } from "tesseract.js";
 
@@ -79,6 +79,7 @@ async function analyzeWithBackend(text: string): Promise<Pick<ChatMessage, "cont
   }
   const tone = data.verdict === "danger" || data.verdict === "warning" || data.verdict === "safe" ? data.verdict : getMessageTone(reply);
   const normalizedReply = normalizeDangerText(reply, tone);
+  return { content: normalizedReply, tone };
   return {
     content: data.ai_used ? `${normalizedReply}\n\nĐã phân tích bằng AI model.` : normalizedReply,
     tone,
@@ -90,6 +91,7 @@ export function ChatbotWidget() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [isReadingImage, setIsReadingImage] = useState(false);
+  const [formError, setFormError] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -100,7 +102,19 @@ export function ChatbotWidget() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     const trimmed = input.trim();
-    if (!trimmed) return;
+    setFormError("");
+    if (!trimmed) {
+      setFormError("Vui lòng nhập nội dung cần kiểm tra.");
+      return;
+    }
+    if (trimmed.length < 3) {
+      setFormError("Nội dung cần tối thiểu 3 ký tự.");
+      return;
+    }
+    if (trimmed.length > 2000) {
+      setFormError("Nội dung quá dài, vui lòng rút gọn dưới 2000 ký tự.");
+      return;
+    }
     const now = Date.now();
     setMessages((current) => [
       ...current,
@@ -214,11 +228,21 @@ export function ChatbotWidget() {
             </label>
           </div>
 
-          <form className="chatbot-form" onSubmit={submit}>
+          <form className="chatbot-form" onSubmit={submit} noValidate>
             <label className="sr-only" htmlFor="chatbot-input">
               Nhập câu hỏi cho trợ lý
             </label>
-            <input id="chatbot-input" value={input} onChange={(event) => setInput(event.target.value)} placeholder="Bác nhập câu hỏi ở đây..." />
+            {formError && <div className="chatbot-form-error">{formError}</div>}
+            <input
+              id="chatbot-input"
+              value={input}
+              onChange={(event) => {
+                setInput(event.target.value);
+                setFormError("");
+              }}
+              placeholder="Bác nhập câu hỏi ở đây..."
+              aria-invalid={!!formError}
+            />
             <button type="submit" aria-label="Gửi câu hỏi">
               <Send size={22} />
             </button>
@@ -237,7 +261,9 @@ export function ChatbotWidget() {
         ) : (
           <>
             <span className="chatbot-fab-pulse" aria-hidden="true" />
-            <MessageCircle size={32} />
+            <span className="chatbot-fab-icon" aria-hidden="true">
+              <Bot size={30} />
+            </span>
             <span>
               <strong>Hỏi trợ lý</strong>
               <small>Cần giúp về lừa đảo?</small>

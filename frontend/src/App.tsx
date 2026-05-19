@@ -10,8 +10,11 @@ export function App() {
     <div className="app">
       <header className="topbar">
         <Link className="brand" to="/">
-          <ShieldAlert size={24} />
-          <span>Cảnh báo lừa đảo</span>
+          <span className="brand-mark" aria-hidden="true">
+            <ShieldAlert size={18} />
+            <strong>CBS</strong>
+          </span>
+          <span>Cảnh Báo Số</span>
         </Link>
         <nav className="nav">
           <NavLink to="/">Tra cứu</NavLink>

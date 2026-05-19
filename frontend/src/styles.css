@@ -6,7 +6,7 @@
   :root {
     color: #111827;
     background: #f8fafc;
-    font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+    font-family: Lexend, ui-sans-serif, system-ui, sans-serif;
   }
 
   body {
@@ -52,6 +52,12 @@
     @apply border-blue-700 ring-4 ring-blue-200;
   }
 
+  input[aria-invalid="true"],
+  select[aria-invalid="true"],
+  textarea[aria-invalid="true"] {
+    @apply border-red-500 bg-red-50 ring-4 ring-red-100;
+  }
+
   table {
     @apply w-full border-collapse text-lg;
   }
@@ -79,7 +85,7 @@
   }
 
   .brand svg {
-    @apply text-red-700;
+    @apply text-blue-800;
   }
 
   .nav {
@@ -337,7 +343,11 @@
   }
 
   .chatbot-form {
-    @apply flex gap-3 border-t-2 border-slate-300 bg-white p-4;
+    @apply flex flex-wrap gap-3 border-t-2 border-slate-300 bg-white p-4;
+  }
+
+  .chatbot-form-error {
+    @apply w-full rounded-lg border-2 border-red-200 bg-red-50 px-3 py-2 text-base font-bold leading-6 text-red-800;
   }
 
   .chatbot-media-controls {
@@ -756,5 +766,839 @@
 
   .chatbot-message-user {
     margin-left: 28px !important;
+  }
+}
+
+/* Blue editorial theme override. Keep this after Tailwind/apply rules. */
+:root {
+  color: #070b18;
+  background: #e8f0fa;
+}
+
+body {
+  background: #e8f0fa !important;
+  color: #070b18 !important;
+  font-family: Lexend, ui-sans-serif, system-ui, sans-serif !important;
+}
+
+.app {
+  background:
+    linear-gradient(135deg, #e7effa 0%, #f7fbff 48%, #dceaf8 100%) !important;
+}
+
+.topbar {
+  width: min(1240px, calc(100% - 48px)) !important;
+  max-width: none !important;
+  margin: 28px auto 0 !important;
+  border: 1px solid rgb(15 23 42 / 0.14) !important;
+  border-radius: 24px !important;
+  background: rgb(248 251 255 / 0.94) !important;
+  box-shadow: 0 22px 60px rgb(31 63 104 / 0.1) !important;
+  backdrop-filter: blur(14px);
+}
+
+.main {
+  padding-top: 36px !important;
+}
+
+.brand,
+h1,
+h2,
+h3,
+.empty-state strong,
+.metric-grid strong,
+.metric-card strong,
+.trend-summary-grid strong,
+.trend-day-list > strong,
+.detail-list strong,
+.call-report-card strong,
+.warning-pattern-card strong {
+  color: #070b18 !important;
+  letter-spacing: 0 !important;
+}
+
+h1 {
+  font-weight: 900 !important;
+}
+
+.brand svg {
+  color: currentColor !important;
+}
+
+.brand-mark {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  border: 1px solid #b8ccef !important;
+  border-radius: 999px !important;
+  background: #e8f1ff !important;
+  color: #0f4ea8 !important;
+  padding: 6px 10px !important;
+  line-height: 1 !important;
+}
+
+.brand-mark strong {
+  font-size: 0.86rem !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.nav a {
+  border: 1px solid transparent !important;
+  border-radius: 999px !important;
+  color: #263247 !important;
+}
+
+.nav a:hover {
+  background: #e8f1ff !important;
+  color: #0f3f8c !important;
+}
+
+.nav a.active {
+  border-color: #0f4ea8 !important;
+  background: #0f4ea8 !important;
+  color: #ffffff !important;
+}
+
+.panel,
+.result-card,
+.combined-history-card,
+.call-report-card,
+.alert-history-card,
+.history-section,
+.table-wrap,
+.pie-legend-table,
+.trend-day-list,
+.auth-card {
+  border: 1px solid rgb(15 23 42 / 0.14) !important;
+  border-radius: 24px !important;
+  background: #f9fcff !important;
+  box-shadow: 0 22px 60px rgb(31 63 104 / 0.09) !important;
+}
+
+.muted,
+.metric-grid span,
+.metric-card span,
+.detail-list span,
+.trend-summary-grid span,
+.pie-legend-label {
+  color: #4b5567 !important;
+}
+
+label {
+  color: #101627 !important;
+}
+
+input,
+select,
+textarea {
+  border: 1px solid #98a7bd !important;
+  border-radius: 18px !important;
+  background: #fbfdff !important;
+  color: #070b18 !important;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.8) !important;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #0f4ea8 !important;
+  box-shadow: 0 0 0 4px rgb(59 130 246 / 0.18) !important;
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: #ef4444 !important;
+  background: #fff1f2 !important;
+  box-shadow: 0 0 0 4px rgb(248 113 113 / 0.18) !important;
+}
+
+.button,
+.icon-button,
+.chatbot-form button,
+.chatbot-close {
+  border-radius: 999px !important;
+}
+
+.button {
+  border-width: 1px !important;
+  box-shadow: 0 14px 34px rgb(15 23 42 / 0.12) !important;
+}
+
+.button.primary,
+.chatbot-form button,
+.chatbot-fab {
+  border-color: #0b2d6b !important;
+  background: #0b2d6b !important;
+  color: #ffffff !important;
+}
+
+.button.primary:hover,
+.chatbot-form button:hover,
+.chatbot-fab:hover {
+  background: #071f4c !important;
+}
+
+.button.ghost,
+.icon-button {
+  border-color: #98a7bd !important;
+  background: #f9fcff !important;
+  color: #101627 !important;
+}
+
+.button.ghost:hover,
+.icon-button:hover {
+  background: #eef5ff !important;
+}
+
+.empty-state,
+.metric-grid div,
+.metric-card,
+.trend-summary-grid div,
+.history-text-box,
+.call-report-card p,
+.pie-legend-row {
+  border: 1px solid #d4deeb !important;
+  border-radius: 20px !important;
+  background: #f8fbff !important;
+}
+
+.empty-state {
+  border-style: dashed !important;
+}
+
+.tag,
+.call-report-meta span,
+.user-chip {
+  border: 1px solid #b8ccef !important;
+  border-radius: 999px !important;
+  background: #e8f1ff !important;
+  color: #0e3c86 !important;
+}
+
+.eyebrow {
+  color: #0f4ea8 !important;
+}
+
+.call-alert-result,
+.system-suggestion,
+.system-suggestion p {
+  border: 1px solid #b8ccef !important;
+  border-radius: 20px !important;
+  background: #edf5ff !important;
+}
+
+.warning-pattern-card {
+  border: 1px solid #b8ccef !important;
+  border-radius: 24px !important;
+  background: #f1f7ff !important;
+}
+
+.form-error,
+.chatbot-form-error {
+  border-width: 1px !important;
+  border-radius: 18px !important;
+}
+
+th {
+  border-bottom-color: #d4deeb !important;
+  color: #4b5567 !important;
+}
+
+td {
+  border-bottom-color: #e3eaf3 !important;
+}
+
+.chatbot-panel {
+  border: 1px solid rgb(15 23 42 / 0.16) !important;
+  border-radius: 24px !important;
+  background: #f9fcff !important;
+  box-shadow: 0 28px 80px rgb(31 63 104 / 0.2) !important;
+}
+
+.chatbot-header {
+  background: #0b2d6b !important;
+}
+
+.chatbot-header h2 {
+  color: #ffffff !important;
+}
+
+.chatbot-kicker,
+.chatbot-fab small {
+  color: #dbeafe !important;
+}
+
+.chatbot-close {
+  width: 56px !important;
+  height: 56px !important;
+  min-width: 56px !important;
+  min-height: 56px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  aspect-ratio: 1 / 1 !important;
+}
+
+.chatbot-media-controls,
+.chatbot-form {
+  border-color: #d4deeb !important;
+  background: #f9fcff !important;
+}
+
+.chatbot-upload {
+  border: 1px solid #b8ccef !important;
+  border-radius: 999px !important;
+  background: #e8f1ff !important;
+  color: #0e3c86 !important;
+}
+
+.chatbot-messages {
+  background: #edf3fb !important;
+}
+
+.chatbot-message-assistant {
+  background: #f9fcff !important;
+  border-color: #d4deeb !important;
+  color: #070b18 !important;
+}
+
+.chatbot-message-user {
+  background: #0f4ea8 !important;
+  border-color: #0f4ea8 !important;
+}
+
+.chatbot-fab {
+  padding-left: 14px !important;
+  border-radius: 999px !important;
+}
+
+.chatbot-fab > svg {
+  width: 32px !important;
+  height: 32px !important;
+}
+
+.chatbot-widget .chatbot-fab[aria-label="Đóng trợ lý chat"] {
+  width: 88px !important;
+  height: 88px !important;
+  min-width: 88px !important;
+  min-height: 88px !important;
+  padding: 0 !important;
+  border-radius: 50% !important;
+  aspect-ratio: 1 / 1 !important;
+}
+
+.chatbot-fab-icon {
+  display: inline-flex !important;
+  width: 44px !important;
+  height: 44px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  background: #e8f1ff !important;
+  color: #0b2d6b !important;
+}
+
+.lookup-panel {
+  padding: clamp(32px, 5vw, 56px) !important;
+}
+
+.lookup-panel h1 {
+  max-width: 900px !important;
+  font-size: clamp(2.35rem, 4.2vw, 3.35rem) !important;
+  line-height: 1.08 !important;
+}
+
+.lookup-panel .muted {
+  max-width: 760px !important;
+  font-size: clamp(1.2rem, 2vw, 1.45rem) !important;
+  line-height: 1.55 !important;
+}
+
+.lookup-panel input,
+.lookup-panel select {
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem) !important;
+}
+
+.lookup-panel .button {
+  font-size: clamp(1.25rem, 2.4vw, 1.75rem) !important;
+}
+
+.result-card.lookup-risk-low,
+.combined-history-card.history-risk-low,
+.call-report-card.history-risk-low,
+.call-alert-result.call-alert-risk-low {
+  border-color: #86efac !important;
+  background: #f0fdf4 !important;
+}
+
+.result-card.lookup-risk-medium,
+.combined-history-card.history-risk-medium,
+.call-report-card.history-risk-medium,
+.call-alert-result.call-alert-risk-medium {
+  border-color: #facc15 !important;
+  background: #fefce8 !important;
+}
+
+.result-card.lookup-risk-high,
+.combined-history-card.history-risk-high,
+.call-report-card.history-risk-high,
+.call-alert-result.call-alert-risk-high {
+  border-color: #fb923c !important;
+  background: #fff7ed !important;
+}
+
+.result-card.lookup-risk-critical,
+.combined-history-card.history-risk-critical,
+.call-report-card.history-risk-critical,
+.call-alert-result.call-alert-risk-critical {
+  border-color: #ef4444 !important;
+  background: #fef2f2 !important;
+}
+
+.risk {
+  border: 1px solid currentColor !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+
+.risk-low {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+.risk-medium {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+}
+
+.risk-high {
+  background: #ffedd5 !important;
+  color: #c2410c !important;
+}
+
+.risk-critical {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
+}
+
+.lookup-risk-low .metric-grid div,
+.history-risk-low .history-section,
+.history-risk-low .history-text-box,
+.history-risk-low .call-report-meta span,
+.call-alert-risk-low p {
+  border-color: #bbf7d0 !important;
+  background: #f7fee7 !important;
+}
+
+.lookup-risk-medium .metric-grid div,
+.history-risk-medium .history-section,
+.history-risk-medium .history-text-box,
+.history-risk-medium .call-report-meta span,
+.call-alert-risk-medium p {
+  border-color: #fde68a !important;
+  background: #fffbeb !important;
+}
+
+.lookup-risk-high .metric-grid div,
+.history-risk-high .history-section,
+.history-risk-high .history-text-box,
+.history-risk-high .call-report-meta span,
+.call-alert-risk-high p {
+  border-color: #fed7aa !important;
+  background: #fff7ed !important;
+}
+
+.lookup-risk-critical .metric-grid div,
+.history-risk-critical .history-section,
+.history-risk-critical .history-text-box,
+.history-risk-critical .call-report-meta span,
+.call-alert-risk-critical p {
+  border-color: #fecaca !important;
+  background: #fff1f2 !important;
+}
+
+.lookup-risk-critical .status-card strong,
+.history-risk-critical .system-suggestion h3,
+.history-risk-critical .system-suggestion strong {
+  color: #991b1b !important;
+}
+
+.status {
+  border: 1px solid currentColor !important;
+  white-space: nowrap !important;
+}
+
+.status-active,
+.status-pending,
+.status-under_review {
+  background: #fef3c7 !important;
+  color: #92400e !important;
+}
+
+.status-approved,
+.status-cleared {
+  background: #dcfce7 !important;
+  color: #166534 !important;
+}
+
+.status-rejected,
+.status-blocked {
+  background: #fee2e2 !important;
+  color: #991b1b !important;
+}
+
+.status-card.status-active {
+  border-color: #f59e0b !important;
+  background: #fffbeb !important;
+}
+
+.status-card.status-active strong {
+  color: #b45309 !important;
+  font-size: clamp(1.8rem, 3vw, 2.45rem) !important;
+  line-height: 1.08 !important;
+}
+
+.metric-grid strong {
+  line-height: 1.08 !important;
+  overflow-wrap: normal !important;
+  word-break: keep-all !important;
+}
+
+@media (max-width: 720px) {
+  .topbar {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-radius: 0 0 22px 22px !important;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 18px 16px !important;
+  }
+
+  .brand {
+    min-width: 0 !important;
+    gap: 10px !important;
+    font-size: clamp(1.35rem, 5vw, 1.9rem) !important;
+  }
+
+  .brand > span:last-child {
+    min-width: 0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .brand-mark {
+    flex: 0 0 auto !important;
+    padding: 6px 9px !important;
+  }
+
+  .auth-actions {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    margin-left: 0 !important;
+    justify-self: end !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .auth-actions .button,
+  .user-chip {
+    flex: 0 1 auto !important;
+  }
+
+  .user-chip {
+    max-width: min(42vw, 220px) !important;
+    min-height: 46px !important;
+    padding: 8px 14px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  .icon-button {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    padding: 0 !important;
+  }
+
+  .nav {
+    grid-column: 1 / -1 !important;
+    grid-row: 2 !important;
+    order: initial !important;
+    width: 100% !important;
+    padding-top: 4px !important;
+  }
+
+  .main {
+    padding-top: 24px !important;
+  }
+}
+
+@media (max-width: 460px) {
+  .brand > span:last-child {
+    display: none !important;
+  }
+
+  .user-chip {
+    max-width: 48vw !important;
+  }
+}
+
+/* Responsive stability fixes. Keep last. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.topbar {
+  width: min(1440px, calc(100% - 40px)) !important;
+}
+
+.brand {
+  flex: 0 0 auto !important;
+}
+
+.nav {
+  min-width: 0 !important;
+  flex: 1 1 auto !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scrollbar-width: thin !important;
+}
+
+.nav a {
+  flex: 0 0 auto !important;
+  font-size: clamp(1rem, 1.15vw, 1.25rem) !important;
+  padding: 10px 16px !important;
+}
+
+.auth-actions {
+  flex: 0 0 auto !important;
+}
+
+@media (max-width: 720px) {
+  body {
+    font-size: 16px !important;
+    line-height: 1.55 !important;
+  }
+
+  .app,
+  .main,
+  .panel,
+  .admin-layout,
+  .form-grid,
+  form,
+  label {
+    max-width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .topbar {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow: hidden !important;
+  }
+
+  .brand {
+    max-width: 100% !important;
+    font-size: clamp(1.1rem, 5vw, 1.55rem) !important;
+  }
+
+  .auth-actions {
+    max-width: 58vw !important;
+  }
+
+  .user-chip {
+    max-width: min(38vw, 180px) !important;
+    min-height: 42px !important;
+    padding: 7px 12px !important;
+    font-size: clamp(0.86rem, 3.4vw, 1rem) !important;
+  }
+
+  .icon-button {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  .nav {
+    display: flex !important;
+    justify-content: flex-start !important;
+    gap: 8px !important;
+    padding: 4px 0 8px !important;
+    margin: 0 !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .nav a {
+    font-size: clamp(0.94rem, 4vw, 1.1rem) !important;
+    padding: 9px 13px !important;
+    white-space: nowrap !important;
+  }
+
+  .main {
+    width: 100% !important;
+    max-width: 100vw !important;
+    padding: 18px 14px 28px !important;
+    overflow-x: hidden !important;
+  }
+
+  .panel {
+    padding: 22px !important;
+    border-radius: 20px !important;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 9vw, 2.65rem) !important;
+    line-height: 1.1 !important;
+    overflow-wrap: anywhere !important;
+  }
+
+  h2 {
+    font-size: clamp(1.45rem, 6vw, 2rem) !important;
+    line-height: 1.15 !important;
+  }
+
+  h3 {
+    font-size: clamp(1.2rem, 5vw, 1.55rem) !important;
+    line-height: 1.2 !important;
+  }
+
+  label {
+    font-size: clamp(1rem, 4.2vw, 1.18rem) !important;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 48px !important;
+    border-radius: 16px !important;
+    padding: 11px 14px !important;
+    font-size: 1rem !important;
+    line-height: 1.4 !important;
+  }
+
+  textarea {
+    min-height: 132px !important;
+  }
+
+  .button {
+    min-height: 48px !important;
+    padding: 11px 16px !important;
+    font-size: 1rem !important;
+  }
+
+  .lookup-panel {
+    padding: 22px !important;
+  }
+
+  .lookup-panel h1 {
+    font-size: clamp(2rem, 9vw, 2.65rem) !important;
+  }
+
+  .lookup-panel .muted,
+  .muted {
+    font-size: 1rem !important;
+    line-height: 1.55 !important;
+  }
+
+  .lookup-panel input,
+  .lookup-panel select,
+  .lookup-panel .button {
+    font-size: 1rem !important;
+  }
+
+  .table-wrap {
+    max-width: 100% !important;
+    overflow-x: auto !important;
+  }
+}
+
+@media (max-width: 420px) {
+  .topbar {
+    padding: 14px 12px !important;
+    gap: 10px !important;
+  }
+
+  .auth-actions {
+    max-width: 64vw !important;
+    gap: 6px !important;
+  }
+
+  .user-chip {
+    max-width: 46vw !important;
+  }
+
+  .nav a {
+    font-size: 0.94rem !important;
+    padding: 8px 11px !important;
+  }
+
+  .panel {
+    padding: 18px !important;
+  }
+}
+
+/* Shared shell width: header and main content stay aligned. Keep last. */
+:root {
+  --shell-width: 1440px;
+  --shell-gutter: 40px;
+}
+
+.topbar,
+.main {
+  width: min(var(--shell-width), calc(100% - var(--shell-gutter))) !important;
+  max-width: none !important;
+}
+
+.main {
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 36px 0 0 !important;
+}
+
+.auth-page {
+  width: 100% !important;
+}
+
+.auth-card {
+  width: min(460px, calc(100vw - 32px)) !important;
+}
+
+@media (max-width: 720px) {
+  :root {
+    --shell-gutter: 0px;
+  }
+
+  .topbar,
+  .main {
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+
+  .main {
+    padding: 18px 0 28px !important;
   }
 }
