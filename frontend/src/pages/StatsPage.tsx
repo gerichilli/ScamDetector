@@ -1,22 +1,39 @@
 import { useQuery } from "@tanstack/react-query";
-import { CartesianGrid, Cell, Legend, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { api } from "../api/client";
 
 const scamTypeLabels: Record<string, string> = {
-  bank_transfer: "Chuyển khoản nhận tiền rồi biến mất",
-  fake_seller: "Bán hàng giả hoặc không giao hàng",
-  fake_job: "Việc làm giả, bắt đóng phí trước",
+  bank_transfer: "Chuyển khoản rồi biến mất",
+  fake_seller: "Bán hàng giả / không giao hàng",
+  fake_job: "Việc làm giả, thu phí trước",
   investment: "Đầu tư lợi nhuận cao bất thường",
-  impersonation: "Giả danh người quen hoặc cơ quan",
-  call_low: "Cuộc gọi rủi ro thấp",
-  call_medium: "Cuộc gọi đáng nghi",
-  call_high: "Cuộc gọi rủi ro cao",
-  call_critical: "Cuộc gọi rất nguy hiểm",
+  impersonation: "Giả danh người quen / cơ quan",
+  call_low: "Cuộc gọi đáng ngờ – Rủi ro thấp",
+  call_medium: "Cuộc gọi đáng ngờ – Trung bình",
+  call_high: "Cuộc gọi lừa đảo – Nguy hiểm cao",
+  call_critical: "Cuộc gọi lừa đảo – Cực kỳ nguy hiểm",
   "Thong bao trung thuong yeu cau dong phi": "Thông báo trúng thưởng, yêu cầu đóng phí",
   "Gia danh ngan hang xin ma OTP": "Giả danh ngân hàng xin mã OTP",
   "Gia danh cong an doa lien quan vu an": "Giả danh công an, dọa liên quan vụ án",
   "Moi dau tu loi cao": "Mời đầu tư lợi nhuận cao",
   other: "Hình thức khác",
+};
+
+// Short one-line description for each scam type shown in the legend table
+const scamTypeDesc: Record<string, string> = {
+  call_critical: "Giả danh công an / tòa án, ép chuyển tiền hoặc đọc OTP ngay",
+  call_high: "Giả danh ngân hàng, thông báo trúng thưởng + đóng phí, dụ đầu tư",
+  call_medium: "Số lạ, kịch bản chưa rõ, nghi ngờ cần theo dõi thêm",
+  call_low: "Quảng cáo, gọi nhầm hoặc khảo sát, rủi ro thấp",
+  bank_transfer: "Nhận tiền chuyển khoản rồi biến mất, không giao hàng / dịch vụ",
+  fake_seller: "Bán hàng giả, lấy cọc trước rồi không giao hoặc giao hàng kém chất lượng",
+  fake_job: "Tuyển dụng giả, yêu cầu đóng phí hoặc mua thiết bị trước khi làm việc",
+  investment: "Hứa lợi nhuận cao chắc chắn, dụ nạp thêm tiền mới được rút",
+  impersonation: "Giả danh người thân, cơ quan nhà nước để xin tiền hoặc thông tin",
+  "Giả danh công an, dọa liên quan vụ án": "Dọa liên quan vụ án, yêu cầu xử lý tài chính khẩn cấp",
+  "Thông báo trúng thưởng, yêu cầu đóng phí": "Báo trúng thưởng rồi yêu cầu đóng phí, thuế, lệ phí",
+  "Giả danh ngân hàng xin mã OTP": "Giả nhân viên ngân hàng để xin mã OTP chiếm đoạt tài khoản",
+  other: "",
 };
 
 const warningPatterns = [
@@ -99,11 +116,10 @@ export function StatsPage() {
     percent: totalByType ? Math.round((it.count / totalByType) * 100) : 0,
   }));
 
-  // Simplify pie: show top N slices and group the rest into "Khác"
-  const TOP_N = 5;
+  // Show items with count >= 2 individually; group count=1 items into "Hình thức khác"
   const sorted = [...byTypeWithPercent].sort((a, b) => (b.count ?? 0) - (a.count ?? 0));
-  const top = sorted.slice(0, TOP_N);
-  const others = sorted.slice(TOP_N);
+  const top = sorted.filter((it) => (it.count ?? 0) >= 2);
+  const others = sorted.filter((it) => (it.count ?? 0) > 0 && (it.count ?? 0) < 2);
   const othersCount = others.reduce((s, it) => s + (it.count ?? 0), 0);
   const pieSlices = [...top];
   if (othersCount > 0) {
@@ -111,7 +127,7 @@ export function StatsPage() {
       scam_type: "other",
       scam_type_label: scamTypeLabels["other"],
       count: othersCount,
-      color: getPieColor("other", TOP_N),
+      color: getPieColor("other", top.length),
       percent: totalByType ? Math.round((othersCount / totalByType) * 100) : 0,
     });
   }
@@ -171,21 +187,36 @@ export function StatsPage() {
             </PieChart>
           </ResponsiveContainer>
 
-          <div className="panel pie-legend-table">
-            <strong>Ghi chú</strong>
-            <div className="pie-legend-grid">
-              {pieSlices.map((item: any) => (
-                <div className="pie-legend-row" key={item.scam_type}>
-                  <span className="pie-legend-swatch" style={{ backgroundColor: item.color }} />
-                  <span className="pie-legend-label">{item.scam_type_label}</span>
-                  <strong>{item.percent}%</strong>
-                </div>
-              ))}
-            </div>
-          </div>
+          <table className="pie-type-table">
+            <thead>
+              <tr>
+                <th>Hình thức</th>
+                <th>%</th>
+                <th>Mô tả</th>
+              </tr>
+            </thead>
+            <tbody>
+              {pieSlices.map((item: any) => {
+                const isOther = item.scam_type === "other";
+                const desc = isOther
+                  ? others.map((s: any) => s.scam_type_label).join(", ")
+                  : (scamTypeDesc[item.scam_type] ?? "");
+                return (
+                  <tr key={item.scam_type}>
+                    <td>
+                      <span className="pie-legend-swatch" style={{ backgroundColor: item.color }} />
+                      {item.scam_type_label}
+                    </td>
+                    <td className="pie-type-pct">{item.percent}%</td>
+                    <td className="pie-type-desc">{desc}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
         <div className="panel chart-panel">
-          <h2>Xu hướng 30 ngày</h2>
+          <h2>Cảnh báo mỗi ngày (30 ngày)</h2>
           <div className="trend-summary-grid">
             <div>
               <span>Tổng cảnh báo 30 ngày</span>
@@ -197,15 +228,13 @@ export function StatsPage() {
             </div>
           </div>
           <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={trendData} margin={{ top: 12, right: 18, bottom: 8, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date_label" interval={4} />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="báo cáo lừa đảo" stroke="#dc2626" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 7 }} />
-              <Line type="monotone" dataKey="đối tượng mới" stroke="#059669" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 7 }} />
-            </LineChart>
+            <BarChart data={trendData} margin={{ top: 12, right: 18, bottom: 8, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} />
+              <XAxis dataKey="date_label" interval={4} tick={{ fontSize: 13 }} />
+              <YAxis allowDecimals={false} tick={{ fontSize: 13 }} />
+              <Tooltip formatter={(v: number) => [`${v} cảnh báo`, "Số cảnh báo"]} />
+              <Bar dataKey="báo cáo lừa đảo" name="Số cảnh báo" fill="#2563eb" radius={[4, 4, 0, 0]} maxBarSize={28} />
+            </BarChart>
           </ResponsiveContainer>
           <div className="trend-day-list">
             <strong>Các ngày có cảnh báo gần đây</strong>
