@@ -1,4 +1,4 @@
-import { Bot, BotMessageSquare, Send, Upload, X } from "lucide-react";
+import { Bot, BotMessageSquare, Mic, MicOff, Send, Upload, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { recognize } from "tesseract.js";
 
@@ -86,18 +86,50 @@ async function analyzeWithBackend(text: string): Promise<Pick<ChatMessage, "cont
   };
 }
 
+interface SpeechRecogAPI {
+  lang: string;
+  interimResults: boolean;
+  maxAlternatives: number;
+  onstart: (() => void) | null;
+  onend: (() => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  start(): void;
+  stop(): void;
+}
+
 export function ChatbotWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [isReadingImage, setIsReadingImage] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [formError, setFormError] = useState("");
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const recognitionRef = useRef<SpeechRecogAPI | null>(null);
 
   useEffect(() => {
     if (!isOpen) return;
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [isOpen, messages]);
+
+  async function sendMessage(text: string) {
+    const now = Date.now();
+    setMessages((current) => [
+      ...current,
+      { id: now, role: "user", content: text },
+      { id: now + 1, role: "assistant", content: "Đang suy nghĩ..." },
+    ]);
+    setInput("");
+
+    try {
+      const reply = await analyzeWithBackend(text);
+      setMessages((current) => [...current.slice(0, -1), { id: now + 2, role: "assistant", ...reply }]);
+    } catch {
+      const reply = getDemoReply(text);
+      setMessages((current) => [...current.slice(0, -1), { id: now + 3, role: "assistant", content: reply, tone: getMessageTone(reply) }]);
+    }
+  }
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -115,21 +147,47 @@ export function ChatbotWidget() {
       setFormError("Nội dung quá dài, vui lòng rút gọn dưới 2000 ký tự.");
       return;
     }
-    const now = Date.now();
-    setMessages((current) => [
-      ...current,
-      { id: now, role: "user", content: trimmed },
-      { id: now + 1, role: "assistant", content: "Đang suy nghĩ..." },
-    ]);
-    setInput("");
+    await sendMessage(trimmed);
+  }
 
-    try {
-      const reply = await analyzeWithBackend(trimmed);
-      setMessages((current) => [...current.slice(0, -1), { id: now + 2, role: "assistant", ...reply }]);
-    } catch {
-      const reply = getDemoReply(trimmed);
-      setMessages((current) => [...current.slice(0, -1), { id: now + 3, role: "assistant", content: reply, tone: getMessageTone(reply) }]);
+  function toggleVoiceInput() {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
     }
+
+    type SpeechRecogCtor = new () => SpeechRecogAPI;
+    const SpeechRecognitionCtor = (
+      (window as unknown as Record<string, unknown>)["SpeechRecognition"] ??
+      (window as unknown as Record<string, unknown>)["webkitSpeechRecognition"]
+    ) as SpeechRecogCtor | undefined;
+
+    if (!SpeechRecognitionCtor) {
+      setFormError("Trình duyệt chưa hỗ trợ mic. Vui lòng dùng Chrome hoặc Edge.");
+      return;
+    }
+
+    setFormError("");
+    const recognition = new SpeechRecognitionCtor();
+    recognition.lang = "vi-VN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsListening(true);
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = (e: { error: string }) => {
+      setIsListening(false);
+      if (e.error !== "aborted") {
+        setFormError("Không nhận được âm thanh. Vui lòng thử lại.");
+      }
+    };
+    recognition.onresult = (e: SpeechRecognitionEvent) => {
+      const transcript = e.results[0][0].transcript.trim();
+      if (transcript) sendMessage(transcript);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
   }
 
   async function handleImageUpload(file: File | null) {
@@ -226,6 +284,15 @@ export function ChatbotWidget() {
               <Upload size={18} />
               <span>{isReadingImage ? "Đang đọc ảnh..." : "Đọc ảnh"}</span>
             </label>
+            <button
+              type="button"
+              className={`chatbot-mic${isListening ? " chatbot-mic-listening" : ""}`}
+              onClick={toggleVoiceInput}
+              aria-label={isListening ? "Dừng ghi âm" : "Nói chuyện"}
+            >
+              {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+              <span>{isListening ? "Đang nghe..." : "Nói chuyện"}</span>
+            </button>
           </div>
 
           <form className="chatbot-form" onSubmit={submit} noValidate>

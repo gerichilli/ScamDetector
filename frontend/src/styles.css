@@ -351,11 +351,25 @@
   }
 
   .chatbot-media-controls {
-    @apply border-t-2 border-slate-200 bg-white px-4 py-3;
+    @apply flex flex-wrap gap-2 border-t-2 border-slate-200 bg-white px-4 py-3;
   }
 
   .chatbot-upload {
     @apply inline-flex cursor-pointer items-center gap-2 rounded-lg border-2 border-blue-200 bg-blue-50 px-4 py-2 text-base font-extrabold text-blue-900 transition hover:bg-blue-100;
+  }
+
+  .chatbot-mic {
+    @apply inline-flex cursor-pointer items-center gap-2 rounded-lg border-2 border-slate-200 bg-slate-50 px-4 py-2 text-base font-extrabold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-300;
+  }
+
+  .chatbot-mic.chatbot-mic-listening {
+    @apply border-red-300 bg-red-50 text-red-700;
+    animation: mic-pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes mic-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
   }
 
   .chatbot-upload input {
@@ -1051,6 +1065,19 @@ td {
   border-radius: 999px !important;
   background: #e8f1ff !important;
   color: #0e3c86 !important;
+}
+
+.chatbot-mic {
+  border: 1px solid #d4deeb !important;
+  border-radius: 999px !important;
+  background: #f4f7fb !important;
+  color: #374151 !important;
+}
+
+.chatbot-mic.chatbot-mic-listening {
+  border-color: #fca5a5 !important;
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
 }
 
 .chatbot-messages {
