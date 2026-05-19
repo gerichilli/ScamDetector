@@ -12,6 +12,14 @@ export function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
+export function validateEmailOrPhone(rawValue: string, fieldName = "Email hoặc số điện thoại"): ValidationResult {
+  const value = rawValue.trim();
+  if (!value) return { valid: false, message: `${fieldName} không được để trống.` };
+  if (isValidEmail(value)) return { valid: true };
+  if (PHONE_PATTERN.test(value)) return { valid: true };
+  return { valid: false, message: `${fieldName} cần là email hợp lệ hoặc số điện thoại bắt đầu bằng 0 hoặc +84.` };
+}
+
 export function validateLookupValue(type: string, rawValue: string): ValidationResult {
   const value = rawValue.trim();
   if (!value) {

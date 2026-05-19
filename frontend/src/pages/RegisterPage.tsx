@@ -1,7 +1,8 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../api/client";
 import { useAuth } from "../state/auth";
-import { isValidEmail } from "../utils/validation";
+import { validateEmailOrPhone } from "../utils/validation";
 
 type RegisterField = "fullName" | "email" | "password" | "form";
 
@@ -9,7 +10,7 @@ export function RegisterPage() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [errorField, setErrorField] = useState<RegisterField | null>(null);
@@ -18,10 +19,11 @@ export function RegisterPage() {
     event.preventDefault();
     setError("");
     setErrorField(null);
-    const trimmedEmail = email.trim();
+    const trimmedIdentifier = identifier.trim();
     const trimmedName = fullName.trim();
-    if (!isValidEmail(trimmedEmail)) {
-      setError("Vui lòng nhập đúng định dạng email.");
+    const identifierValidation = validateEmailOrPhone(trimmedIdentifier);
+    if (!identifierValidation.valid) {
+      setError(identifierValidation.message ?? "Vui lòng nhập email hoặc số điện thoại hợp lệ.");
       setErrorField("email");
       return;
     }
@@ -36,10 +38,10 @@ export function RegisterPage() {
       return;
     }
     try {
-      await register(trimmedEmail, password, trimmedName);
+      await register(trimmedIdentifier, password, trimmedName);
       navigate("/");
     } catch {
-      setError("Không thể đăng ký. Kiểm tra email hoặc mật khẩu tối thiểu 8 ký tự.");
+      setError("Không thể đăng ký. Kiểm tra email/số điện thoại hoặc mật khẩu tối thiểu 8 ký tự.");
       setErrorField("form");
     }
   }
@@ -52,8 +54,8 @@ export function RegisterPage() {
           setFullName(event.target.value);
           if (errorField === "fullName") setErrorField(null);
         }} aria-invalid={errorField === "fullName"} /></label>
-        <label>Email<input type="text" inputMode="email" value={email} onChange={(event) => {
-          setEmail(event.target.value);
+        <label>Email hoặc số điện thoại<input type="text" inputMode="text" value={identifier} onChange={(event) => {
+          setIdentifier(event.target.value);
           if (errorField === "email") setErrorField(null);
         }} aria-invalid={errorField === "email"} /></label>
         <label>Mật khẩu<input type="password" value={password} onChange={(event) => {
@@ -62,6 +64,11 @@ export function RegisterPage() {
         }} aria-invalid={errorField === "password"} /></label>
         {error && <div className="form-error">{error}</div>}
         <button className="button primary" type="submit">Tạo tài khoản</button>
+        <div className="auth-divider"><span>hoặc</span></div>
+        <a className="button ghost google-button" href={`${API_BASE_URL}/auth/google/login`}>
+          <span className="google-mark">G</span>
+          Tiếp tục với Google
+        </a>
         <p className="muted">Đã có tài khoản? <Link to="/login">Đăng nhập</Link></p>
       </form>
     </div>

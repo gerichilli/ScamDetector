@@ -134,7 +134,7 @@ async def analyze_text_with_ai(text: str, api_key: str, model: str) -> Dict[str,
     print(f"MASK_DEMO noi_dung_goc={text.encode('unicode_escape').decode('ascii')}", flush=True)
     print(f"MASK_DEMO noi_dung_sau_khi_che={redacted_text.encode('unicode_escape').decode('ascii')}", flush=True)
     # IMPORTANT: Temporary demo logs kept on for verification; Gemini request flow continues below.
-    return fallback
+    # return fallback
     instructions = (
         "Always address the user as 'bác' and refer to yourself as 'cháu'. "
         "Bạn là trợ lý cảnh báo lừa đảo cho người dùng Việt Nam. "

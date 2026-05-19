@@ -5,6 +5,7 @@ import { ChatbotWidget } from "./components/ChatbotWidget";
 
 export function App() {
   const { user, logout } = useAuth();
+  const accountLabel = user?.email ?? user?.phone_number ?? "Tài khoản";
 
   return (
     <div className="app">
@@ -26,7 +27,7 @@ export function App() {
         <div className="auth-actions">
           {user ? (
             <>
-              <Link to="/profile" className="user-chip">{user.email}</Link>
+              <Link to="/profile" className="user-chip">{accountLabel}</Link>
               <button className="icon-button" onClick={logout} title="Đăng xuất">
                 <LogOut size={18} />
               </button>

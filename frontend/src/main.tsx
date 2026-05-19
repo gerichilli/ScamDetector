@@ -11,6 +11,7 @@ import "@fontsource/lexend/800.css";
 import "@fontsource/lexend/900.css";
 import { AuthProvider, useAuth } from "./state/auth";
 import { AdminPage } from "./pages/AdminPage";
+import { GoogleCallbackPage } from "./pages/GoogleCallbackPage";
 import { HistoryPage } from "./pages/HistoryPage";
 import { LoginPage } from "./pages/LoginPage";
 import { LookupPage } from "./pages/LookupPage";
@@ -45,6 +46,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/stats" element={<StatsPage />} />
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
               <Route
                 path="/report"
                 element={

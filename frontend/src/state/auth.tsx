@@ -6,8 +6,8 @@ import type { User } from "../api/types";
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName?: string) => Promise<void>;
+  login: (identifier: string, password: string) => Promise<void>;
+  register: (identifier: string, password: string, fullName?: string) => Promise<void>;
   logout: () => void;
 };
 
@@ -29,8 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  async function login(email: string, password: string) {
-    const response = await api.post("/auth/login", { email, password });
+  async function login(identifier: string, password: string) {
+    const response = await api.post("/auth/login", { identifier, password });
     localStorage.setItem("access_token", response.data.access_token);
     setUser(response.data.user);
   }
@@ -39,9 +39,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     user,
     loading,
     login,
-    async register(email, password, fullName) {
-      await api.post("/auth/register", { email, password, full_name: fullName || null });
-      await login(email, password);
+    async register(identifier, password, fullName) {
+      await api.post("/auth/register", { identifier, password, full_name: fullName || null });
+      await login(identifier, password);
     },
     logout() {
       localStorage.removeItem("access_token");

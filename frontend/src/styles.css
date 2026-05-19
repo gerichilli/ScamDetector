@@ -1587,6 +1587,38 @@ body,
   width: min(460px, calc(100vw - 32px)) !important;
 }
 
+.auth-divider {
+  display: flex !important;
+  align-items: center !important;
+  gap: 14px !important;
+  color: #64748b !important;
+  font-weight: 700 !important;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "" !important;
+  height: 1px !important;
+  flex: 1 !important;
+  background: #d4deeb !important;
+}
+
+.google-button {
+  width: 100% !important;
+}
+
+.google-mark {
+  display: inline-flex !important;
+  width: 28px !important;
+  height: 28px !important;
+  align-items: center !important;
+  justify-content: center !important;
+  border-radius: 999px !important;
+  background: #ffffff !important;
+  color: #0b57d0 !important;
+  font-weight: 900 !important;
+}
+
 @media (max-width: 720px) {
   :root {
     --shell-gutter: 0px;

@@ -1,14 +1,15 @@
 import { FormEvent, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "../api/client";
 import { useAuth } from "../state/auth";
-import { isValidEmail } from "../utils/validation";
+import { validateEmailOrPhone } from "../utils/validation";
 
 type LoginField = "email" | "password" | "form";
 
 export function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [errorField, setErrorField] = useState<LoginField | null>(null);
@@ -17,9 +18,10 @@ export function LoginPage() {
     event.preventDefault();
     setError("");
     setErrorField(null);
-    const trimmedEmail = email.trim();
-    if (!isValidEmail(trimmedEmail)) {
-      setError("Vui lòng nhập đúng định dạng email.");
+    const trimmedIdentifier = identifier.trim();
+    const identifierValidation = validateEmailOrPhone(trimmedIdentifier);
+    if (!identifierValidation.valid) {
+      setError(identifierValidation.message ?? "Vui lòng nhập email hoặc số điện thoại hợp lệ.");
       setErrorField("email");
       return;
     }
@@ -29,10 +31,10 @@ export function LoginPage() {
       return;
     }
     try {
-      await login(trimmedEmail, password);
+      await login(trimmedIdentifier, password);
       navigate("/");
     } catch {
-      setError("Email hoặc mật khẩu không đúng.");
+      setError("Email/số điện thoại hoặc mật khẩu không đúng.");
       setErrorField("form");
     }
   }
@@ -41,8 +43,8 @@ export function LoginPage() {
     <div className="auth-page">
       <form className="panel auth-card" onSubmit={submit} noValidate>
         <h1>Đăng nhập</h1>
-        <label>Email<input type="text" inputMode="email" value={email} onChange={(event) => {
-          setEmail(event.target.value);
+        <label>Email hoặc số điện thoại<input type="text" inputMode="text" value={identifier} onChange={(event) => {
+          setIdentifier(event.target.value);
           if (errorField === "email") setErrorField(null);
         }} aria-invalid={errorField === "email"} /></label>
         <label>Mật khẩu<input type="password" value={password} onChange={(event) => {
@@ -51,6 +53,11 @@ export function LoginPage() {
         }} aria-invalid={errorField === "password"} /></label>
         {error && <div className="form-error">{error}</div>}
         <button className="button primary" type="submit">Đăng nhập</button>
+        <div className="auth-divider"><span>hoặc</span></div>
+        <a className="button ghost google-button" href={`${API_BASE_URL}/auth/google/login`}>
+          <span className="google-mark">G</span>
+          Tiếp tục với Google
+        </a>
         <p className="muted">Chưa có tài khoản? <Link to="/register">Đăng ký</Link></p>
       </form>
     </div>

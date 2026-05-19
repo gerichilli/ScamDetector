@@ -14,8 +14,12 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
-    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    email: Mapped[Optional[str]] = mapped_column(String(255), unique=True, index=True)
+    phone_number: Mapped[Optional[str]] = mapped_column(String(40), unique=True, index=True)
+    normalized_phone_number: Mapped[Optional[str]] = mapped_column(String(40), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    google_sub: Mapped[Optional[str]] = mapped_column(String(255), unique=True, index=True)
+    auth_provider: Mapped[str] = mapped_column(String(30), default="local", nullable=False)
     full_name: Mapped[Optional[str]] = mapped_column(String(255))
     role: Mapped[str] = mapped_column(String(30), default="user", nullable=False)
     status: Mapped[str] = mapped_column(String(30), default="active", nullable=False)
