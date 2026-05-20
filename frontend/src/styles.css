@@ -1645,7 +1645,7 @@ body,
 .main {
   margin-left: auto !important;
   margin-right: auto !important;
-  padding: 36px 0 0 !important;
+  padding: 36px 0 140px !important;
 }
 
 .auth-page {
@@ -1700,6 +1700,6 @@ body,
   }
 
   .main {
-    padding: 18px 0 28px !important;
+    padding: 18px 0 150px !important;
   }
 }

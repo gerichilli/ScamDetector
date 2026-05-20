@@ -43,7 +43,7 @@ def lookup(
         )
         db.commit()
 
-    if not entity:
+    if not entity or entity.verified_report_count <= 0 or entity.status != "active":
         return LookupResponse(found=False, message="No scam record found for this query.")
 
     rows = db.execute(

@@ -85,6 +85,13 @@ export type CallAlertResponse = {
   call_time: string;
 };
 
+export type ReportCreateResponse = {
+  id: string;
+  status: string;
+  scam_entity_id: string;
+  created_at: string;
+};
+
 export type CallReportItem = {
   call_id: string;
   alert_id: string;

@@ -79,7 +79,6 @@ async function analyzeWithBackend(text: string): Promise<Pick<ChatMessage, "cont
   }
   const tone = data.verdict === "danger" || data.verdict === "warning" || data.verdict === "safe" ? data.verdict : getMessageTone(reply);
   const normalizedReply = normalizeDangerText(reply, tone);
-  return { content: normalizedReply, tone };
   return {
     content: data.ai_used ? `${normalizedReply}\n\nĐã phân tích bằng AI model.` : normalizedReply,
     tone,
