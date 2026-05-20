@@ -6,6 +6,7 @@ from app.models.scam_alert import ScamAlert
 from app.models.scam_database_entry import ScamDatabaseEntry
 from app.models.scam_entity import ScamEntity
 from app.models.scam_report import ScamReport
+from app.models.trusted_contact import TrustedContact
 from app.models.user import User
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "ScamDatabaseEntry",
     "ScamEntity",
     "ScamReport",
+    "TrustedContact",
     "User",
 ]

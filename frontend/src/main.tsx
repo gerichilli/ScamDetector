@@ -19,6 +19,7 @@ import { ProfilePage } from "./pages/ProfilePage";
 import { RegisterPage } from "./pages/RegisterPage";
 import { ReportPage } from "./pages/ReportPage";
 import { StatsPage } from "./pages/StatsPage";
+import { TrustedContactConfirmPage } from "./pages/TrustedContactConfirmPage";
 import "./styles.css";
 
 const queryClient = new QueryClient();
@@ -47,6 +48,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/auth/google/callback" element={<GoogleCallbackPage />} />
+              <Route path="/trusted-contact-confirm" element={<TrustedContactConfirmPage />} />
               <Route
                 path="/report"
                 element={

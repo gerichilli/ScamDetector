@@ -34,7 +34,31 @@ def ensure_user_oauth_columns() -> None:
         connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_google_sub ON users (google_sub)"))
 
 
+def ensure_notification_and_contact_columns() -> None:
+    inspector = inspect(engine)
+    table_names = set(inspector.get_table_names())
+    with engine.begin() as connection:
+        if "notifications" in table_names:
+            notification_columns = {column["name"] for column in inspector.get_columns("notifications")}
+            if "target_email" not in notification_columns:
+                connection.execute(text("ALTER TABLE notifications ADD COLUMN target_email VARCHAR(255)"))
+        if "trusted_contacts" in table_names:
+            trusted_contact_columns = {column["name"] for column in inspector.get_columns("trusted_contacts")}
+            if "phone_number" not in trusted_contact_columns:
+                connection.execute(text("ALTER TABLE trusted_contacts ADD COLUMN phone_number VARCHAR(40)"))
+            if "status" not in trusted_contact_columns:
+                connection.execute(text("ALTER TABLE trusted_contacts ADD COLUMN status VARCHAR(30) DEFAULT 'pending' NOT NULL"))
+            if "confirmation_token" not in trusted_contact_columns:
+                connection.execute(text("ALTER TABLE trusted_contacts ADD COLUMN confirmation_token VARCHAR(255)"))
+            if "confirmed_at" not in trusted_contact_columns:
+                connection.execute(text("ALTER TABLE trusted_contacts ADD COLUMN confirmed_at TIMESTAMP"))
+            connection.execute(text("CREATE INDEX IF NOT EXISTS ix_trusted_contacts_user_id ON trusted_contacts (user_id)"))
+            connection.execute(text("CREATE INDEX IF NOT EXISTS ix_trusted_contacts_email ON trusted_contacts (email)"))
+            connection.execute(text("CREATE UNIQUE INDEX IF NOT EXISTS ix_trusted_contacts_confirmation_token ON trusted_contacts (confirmation_token)"))
+
+
 ensure_user_oauth_columns()
+ensure_notification_and_contact_columns()
 
 app = FastAPI(title=settings.app_name)
 

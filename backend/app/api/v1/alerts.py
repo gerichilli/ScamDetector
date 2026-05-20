@@ -9,12 +9,58 @@ from app.core.database import get_db
 from app.models.call_record import CallRecord
 from app.models.notification import Notification
 from app.models.scam_alert import ScamAlert
+from app.models.trusted_contact import TrustedContact
 from app.models.user import User
 from app.schemas.alert import AlertHistoryItem, CallAlertCreate, CallAlertResponse, CallReportItem
+from app.services.email_service import send_trusted_contact_alert_email, smtp_enabled
 from app.services.alert_service import classify_call_risk
 from app.services.normalization_service import normalize_entity_value
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
+
+
+def notify_trusted_contacts(
+    db: Session,
+    user: User,
+    alert: ScamAlert,
+    call_record: CallRecord,
+) -> None:
+    contacts = db.scalars(
+        select(TrustedContact).where(
+            TrustedContact.user_id == user.id,
+            TrustedContact.status == "confirmed",
+        )
+    ).all()
+    if not contacts:
+        return
+
+    elderly_name = user.full_name or user.email or user.phone_number or "nguoi dung"
+    mail_ready = smtp_enabled()
+    for contact in contacts:
+        sent = False
+        if mail_ready:
+            try:
+                sent = send_trusted_contact_alert_email(
+                    target_email=contact.email,
+                    target_name=contact.full_name,
+                    elderly_name=elderly_name,
+                    phone_number=call_record.phone_number,
+                    risk_level=alert.risk_level,
+                    message=alert.message,
+                    recommended_action=alert.recommended_action,
+                )
+            except Exception:
+                sent = False
+
+        db.add(
+            Notification(
+                alert_id=alert.id,
+                target_user_id=user.id,
+                target_email=contact.email,
+                channel="trusted_contact_email",
+                sent=sent,
+            )
+        )
 
 
 @router.post("/calls", response_model=CallAlertResponse)
@@ -46,6 +92,7 @@ def create_call_alert(
 
     if risk_level in {"high", "critical"}:
         db.add(Notification(alert_id=alert.id, target_user_id=user.id, channel="in_app", sent=True))
+        notify_trusted_contacts(db, user, alert, call_record)
 
     db.commit()
     db.refresh(call_record)

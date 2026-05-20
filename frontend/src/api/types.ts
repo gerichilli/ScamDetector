@@ -7,6 +7,17 @@ export type User = {
   status: string;
 };
 
+export type TrustedContact = {
+  id: string;
+  full_name: string;
+  email: string;
+  phone_number: string | null;
+  status: "pending" | "confirmed";
+  confirmed_at: string | null;
+  created_at: string;
+  confirmation_preview_url: string | null;
+};
+
 export type LookupResponse = {
   found: boolean;
   message?: string;

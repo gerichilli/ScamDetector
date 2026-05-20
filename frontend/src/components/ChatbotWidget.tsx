@@ -86,6 +86,10 @@ async function analyzeWithBackend(text: string): Promise<Pick<ChatMessage, "cont
   };
 }
 
+type SpeechRecognitionEventLike = {
+  results: ArrayLike<ArrayLike<{ transcript: string }>>;
+};
+
 interface SpeechRecogAPI {
   lang: string;
   interimResults: boolean;
@@ -93,7 +97,7 @@ interface SpeechRecogAPI {
   onstart: (() => void) | null;
   onend: (() => void) | null;
   onerror: ((event: { error: string }) => void) | null;
-  onresult: ((event: SpeechRecognitionEvent) => void) | null;
+  onresult: ((event: SpeechRecognitionEventLike) => void) | null;
   start(): void;
   stop(): void;
 }
@@ -181,7 +185,7 @@ export function ChatbotWidget() {
         setFormError("Không nhận được âm thanh. Vui lòng thử lại.");
       }
     };
-    recognition.onresult = (e: SpeechRecognitionEvent) => {
+    recognition.onresult = (e: SpeechRecognitionEventLike) => {
       const transcript = e.results[0][0].transcript.trim();
       if (transcript) sendMessage(transcript);
     };

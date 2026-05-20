@@ -32,3 +32,4 @@ class User(Base):
 
     reports = relationship("ScamReport", back_populates="reporter", foreign_keys="ScamReport.reporter_id")
     lookup_history = relationship("LookupHistory", back_populates="user")
+    trusted_contacts = relationship("TrustedContact", back_populates="user", cascade="all, delete-orphan")
