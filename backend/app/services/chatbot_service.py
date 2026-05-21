@@ -1,5 +1,6 @@
 import json
 import re
+import base64
 from typing import Any, Dict
 
 import httpx
@@ -187,3 +188,72 @@ async def analyze_text_with_ai(text: str, api_key: str, model: str) -> Dict[str,
         }
     except Exception:
         return fallback
+
+
+async def analyze_image_with_ai(image_bytes: bytes, mime_type: str, api_key: str, model: str) -> Dict[str, Any] | None:
+    if not api_key:
+        return None
+
+    instructions = (
+        "Always address the user as 'bác' and refer to yourself as 'cháu'. "
+        "Bạn là trợ lý cảnh báo lừa đảo cho người dùng Việt Nam. "
+        "Hãy quan sát ảnh và phân tích nội dung có dấu hiệu lừa đảo hay không. "
+        "Trả về JSON hợp lệ với các field: verdict, summary, recommended_action. "
+        "verdict chỉ được là safe, warning hoặc danger. "
+        "Nếu verdict là danger, recommended_action phải bắt đầu bằng 'NGUY HIỂM:'. "
+        "Không yêu cầu người dùng cung cấp OTP, mật khẩu, số tài khoản hoặc CCCD."
+    )
+
+    prompt = (
+        "Phân tích ảnh này để nhận diện dấu hiệu lừa đảo trong tin nhắn, giao diện hoặc nội dung hiển thị. "
+        "Trả lời ngắn gọn, dễ hiểu cho bác."
+    )
+
+    encoded_image = base64.b64encode(image_bytes).decode("ascii")
+
+    try:
+        async with httpx.AsyncClient(timeout=30) as client:
+            response = await client.post(
+                f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": api_key,
+                },
+                json={
+                    "system_instruction": {
+                        "parts": [{"text": instructions}],
+                    },
+                    "contents": [
+                        {
+                            "parts": [
+                                {"text": prompt},
+                                {
+                                    "inline_data": {
+                                        "mime_type": mime_type,
+                                        "data": encoded_image,
+                                    }
+                                },
+                            ],
+                        }
+                    ],
+                    "generationConfig": {
+                        "temperature": 0.2,
+                    },
+                },
+            )
+            response.raise_for_status()
+
+        gemini_response = response.json()
+        parts = gemini_response.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+        output_text = "\n".join(part.get("text", "") for part in parts if part.get("text")).strip()
+        ai_payload = _parse_ai_json(output_text)
+        verdict = ai_payload.get("verdict") if ai_payload.get("verdict") in {"safe", "warning", "danger"} else "warning"
+        return {
+            "verdict": verdict,
+            "summary": ai_payload.get("summary") or "Cháu đã phân tích ảnh nhưng chưa trích xuất được kết luận rõ ràng.",
+            "matches": [],
+            "recommended_action": ai_payload.get("recommended_action"),
+            "ai_used": True,
+        }
+    except Exception:
+        return None

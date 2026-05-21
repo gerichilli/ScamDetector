@@ -1,11 +1,11 @@
 import { Bot, BotMessageSquare, Mic, MicOff, Send, Upload, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
-import { recognize } from "tesseract.js";
 
 type ChatMessage = {
   id: number;
   role: "assistant" | "user";
   content: string;
+  imageUrl?: string;
   tone?: "danger" | "warning" | "safe";
 };
 
@@ -13,34 +13,32 @@ const initialMessages: ChatMessage[] = [
   {
     id: 1,
     role: "assistant",
-    content: "Chào bác ạ. Cháu là trợ lý cảnh báo lừa đảo. Bác có thể nhập câu hỏi hoặc tình huống cần kiểm tra.",
+    content:
+      "Chào bác ạ. Cháu là trợ lý cảnh báo lừa đảo. Bác có thể nhập câu hỏi, mô tả tình huống hoặc gửi ảnh để cháu hỗ trợ kiểm tra.",
   },
   {
     id: 2,
     role: "assistant",
-    content: "Nếu có người yêu cầu bác đọc mã OTP, chuyển tiền gấp, hoặc bấm vào link lạ, bác nên dừng lại và hỏi người thân trước ạ.",
+    content:
+      "Nếu có người yêu cầu bác đọc mã OTP, chuyển tiền gấp hoặc bấm vào link lạ, bác nên dừng lại và hỏi người thân trước ạ.",
   },
 ];
 
 function getDemoReply(text: string) {
   const normalized = text.toLowerCase();
   if (normalized.includes("otp") || normalized.includes("mã xác thực")) {
-    return "NGUY HIỂM: Bác tuyệt đối không đọc mã OTP hoặc mã xác thực cho bất kỳ ai. Nếu đã lỡ đọc, hãy gọi ngân hàng và đổi mật khẩu ngay.";
+    return "NGUY HIỂM: Bác tuyệt đối không đọc mã OTP hoặc mã xác thực cho bất kỳ ai. Nếu đã lỡ đọc, bác hãy đổi mật khẩu và liên hệ ngân hàng ngay.";
   }
   if (normalized.includes("chuyển tiền") || normalized.includes("chuyển khoản")) {
     return "CẢNH BÁO: Bác không nên chuyển tiền khi chưa xác minh trực tiếp với người thân, ngân hàng hoặc cơ quan chính thức.";
   }
-  if (normalized.includes("link") || normalized.includes("đường dẫn") || normalized.includes("nhấp")) {
-    return "ĐÁNG NGHI: Bác không nên bấm vào link lạ. Hãy kiểm tra tên miền, người gửi và hỏi người thân trước khi thao tác.";
+  if (normalized.includes("link") || normalized.includes("đường dẫn") || normalized.includes("bấm vào")) {
+    return "ĐỀ NGHỊ: Bác không nên bấm vào liên kết lạ. Hãy kiểm tra lại người gửi hoặc hỏi người thân trước khi thao tác.";
   }
   if (normalized.includes("trúng thưởng") || normalized.includes("nhận quà") || normalized.includes("đóng phí")) {
-    return "ĐÁNG NGHI: Các yêu cầu đóng phí để nhận quà hoặc trúng thưởng thường là dấu hiệu lừa đảo.";
+    return "ĐỀ NGHỊ: Yêu cầu đóng phí để nhận quà hoặc nhận thưởng thường là dấu hiệu lừa đảo.";
   }
-  return "Cháu chưa thấy dấu hiệu lừa đảo rõ ràng, nhưng bác vẫn nên kiểm tra người gửi, số điện thoại, link và không cung cấp thông tin cá nhân.";
-}
-
-function compactText(text: string) {
-  return text.replace(/\s+/g, " ").trim();
+  return "Cháu chưa thấy dấu hiệu lừa đảo quá rõ, nhưng bác vẫn nên kiểm tra lại người gửi và không cung cấp thông tin cá nhân nhạy cảm.";
 }
 
 function getMessageTone(text: string): ChatMessage["tone"] {
@@ -48,18 +46,18 @@ function getMessageTone(text: string): ChatMessage["tone"] {
   if (normalized.includes("nguy hiểm") || normalized.includes("khẩn cấp")) {
     return "danger";
   }
-  if (normalized.includes("cảnh báo") || normalized.includes("đáng nghi")) {
+  if (normalized.includes("cảnh báo") || normalized.includes("đề nghị")) {
     return "warning";
   }
   return "safe";
 }
 
 function normalizeDangerText(text: string, tone: ChatMessage["tone"]) {
-  const withoutRedAlert = text.replace(/cảnh báo đỏ\s*:/gi, "NGUY HIỂM:");
-  if (tone === "danger" && !withoutRedAlert.toLowerCase().includes("nguy hiểm")) {
-    return `NGUY HIỂM: ${withoutRedAlert}`;
+  const withoutWarningPrefix = text.replace(/cảnh báo đỏ\s*:/gi, "NGUY HIỂM:");
+  if (tone === "danger" && !withoutWarningPrefix.toLowerCase().includes("nguy hiểm")) {
+    return `NGUY HIỂM: ${withoutWarningPrefix}`;
   }
-  return withoutRedAlert;
+  return withoutWarningPrefix;
 }
 
 async function analyzeWithBackend(text: string): Promise<Pick<ChatMessage, "content" | "tone">> {
@@ -68,6 +66,7 @@ async function analyzeWithBackend(text: string): Promise<Pick<ChatMessage, "cont
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text }),
   });
+
   if (!response.ok) {
     throw new Error("Analyze API error");
   }
@@ -77,12 +76,40 @@ async function analyzeWithBackend(text: string): Promise<Pick<ChatMessage, "cont
   if (!reply) {
     throw new Error("Analyze API empty response");
   }
-  const tone = data.verdict === "danger" || data.verdict === "warning" || data.verdict === "safe" ? data.verdict : getMessageTone(reply);
-  const normalizedReply = normalizeDangerText(reply, tone);
-  return {
-    content: data.ai_used ? `${normalizedReply}\n\nĐã phân tích bằng AI model.` : normalizedReply,
-    tone,
-  };
+
+  const tone =
+    data.verdict === "danger" || data.verdict === "warning" || data.verdict === "safe"
+      ? data.verdict
+      : getMessageTone(reply);
+
+  return { content: normalizeDangerText(reply, tone), tone };
+}
+
+async function analyzeImageWithBackend(file: File): Promise<Pick<ChatMessage, "content" | "tone">> {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/v1"}/chat/analyze-image`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    throw new Error("Analyze image API error");
+  }
+
+  const data = await response.json();
+  const reply = data.recommended_action ?? data.summary;
+  if (!reply) {
+    throw new Error("Analyze image API empty response");
+  }
+
+  const tone =
+    data.verdict === "danger" || data.verdict === "warning" || data.verdict === "safe"
+      ? data.verdict
+      : getMessageTone(reply);
+
+  return { content: normalizeDangerText(reply, tone), tone };
 }
 
 type SpeechRecognitionEventLike = {
@@ -121,7 +148,7 @@ export function ChatbotWidget() {
     setMessages((current) => [
       ...current,
       { id: now, role: "user", content: text },
-      { id: now + 1, role: "assistant", content: "Đang suy nghĩ..." },
+      { id: now + 1, role: "assistant", content: "Cháu đang phân tích..." },
     ]);
     setInput("");
 
@@ -138,6 +165,7 @@ export function ChatbotWidget() {
     event.preventDefault();
     const trimmed = input.trim();
     setFormError("");
+
     if (!trimmed) {
       setFormError("Vui lòng nhập nội dung cần kiểm tra.");
       return;
@@ -150,6 +178,7 @@ export function ChatbotWidget() {
       setFormError("Nội dung quá dài, vui lòng rút gọn dưới 2000 ký tự.");
       return;
     }
+
     await sendMessage(trimmed);
   }
 
@@ -181,12 +210,12 @@ export function ChatbotWidget() {
     recognition.onerror = (e: { error: string }) => {
       setIsListening(false);
       if (e.error !== "aborted") {
-        setFormError("Không nhận được âm thanh. Vui lòng thử lại.");
+        setFormError("Không nhận diện được âm thanh. Vui lòng thử lại.");
       }
     };
     recognition.onresult = (e: SpeechRecognitionEventLike) => {
       const transcript = e.results[0][0].transcript.trim();
-      if (transcript) sendMessage(transcript);
+      if (transcript) void sendMessage(transcript);
     };
 
     recognitionRef.current = recognition;
@@ -195,46 +224,27 @@ export function ChatbotWidget() {
 
   async function handleImageUpload(file: File | null) {
     if (!file) return;
+
     const now = Date.now();
+    const imageUrl = URL.createObjectURL(file);
+
     setIsReadingImage(true);
     setMessages((current) => [
       ...current,
-      { id: now, role: "user", content: `Đã gửi ảnh: ${file.name}` },
-      { id: now + 1, role: "assistant", content: "Đang đọc chữ trong ảnh..." },
+      { id: now, role: "user", content: file.name, imageUrl },
+      { id: now + 1, role: "assistant", content: "Cháu đang phân tích ảnh..." },
     ]);
 
     try {
-      const result = await recognize(file, "vie+eng", {
-        logger: (message) => {
-          if (message.status === "recognizing text") {
-            const percent = Math.round(message.progress * 100);
-            setMessages((current) => [
-              ...current.slice(0, -1),
-              { id: now + 1, role: "assistant", content: `Đang đọc chữ trong ảnh... ${percent}%` },
-            ]);
-          }
-        },
-      });
-      const extractedText = compactText(result.data.text);
-      const analysis = extractedText
-        ? await analyzeWithBackend(extractedText).catch(() => {
-            const reply = getDemoReply(extractedText);
-            return { content: reply, tone: getMessageTone(reply) };
-          })
-        : { content: "", tone: "safe" as const };
-      const reply = extractedText
-        ? `Cháu đọc được: "${extractedText}"\n\n${analysis.content}`
-        : "Cháu chưa đọc được chữ rõ ràng trong ảnh này. Bác thử ảnh nét hơn hoặc nhập nội dung tin nhắn vào ô chat giúp cháu.";
-
-      setMessages((current) => [...current.slice(0, -1), { id: now + 2, role: "assistant", content: reply, tone: analysis.tone }]);
+      const analysis = await analyzeImageWithBackend(file);
+      setMessages((current) => [...current.slice(0, -1), { id: now + 2, role: "assistant", ...analysis }]);
     } catch {
       setMessages((current) => [
         ...current.slice(0, -1),
         {
           id: now + 3,
           role: "assistant",
-          content:
-            "Cháu chưa đọc được ảnh này. Bác thử ảnh rõ hơn, hoặc nhập nội dung trong ảnh vào ô chat để cháu kiểm tra ngay.",
+          content: "Cháu chưa phân tích được ảnh này. Bác thử ảnh rõ hơn hoặc nhập nội dung bằng văn bản giúp cháu nhé.",
         },
       ]);
     } finally {
@@ -265,7 +275,22 @@ export function ChatbotWidget() {
                   key={message.id}
                 >
                   {message.role === "assistant" && <BotMessageSquare size={20} />}
-                  <p>{message.content}</p>
+                  <div>
+                    {message.imageUrl && (
+                      <img
+                        src={message.imageUrl}
+                        alt={message.content || "Ảnh đã gửi"}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          maxWidth: "220px",
+                          borderRadius: "12px",
+                          marginBottom: message.content ? "0.5rem" : "0",
+                        }}
+                      />
+                    )}
+                    {message.content && <p>{message.content}</p>}
+                  </div>
                 </div>
               );
             })}
@@ -280,12 +305,12 @@ export function ChatbotWidget() {
                 disabled={isReadingImage}
                 onChange={(e) => {
                   const f = e.target.files?.[0] ?? null;
-                  handleImageUpload(f);
+                  void handleImageUpload(f);
                   e.target.value = "";
                 }}
               />
               <Upload size={18} />
-              <span>{isReadingImage ? "Đang đọc ảnh..." : "Đọc ảnh"}</span>
+              <span>{isReadingImage ? "Đang phân tích ảnh..." : "Gửi ảnh"}</span>
             </label>
             <button
               type="button"
