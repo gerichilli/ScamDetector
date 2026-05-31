@@ -1,0 +1,6 @@
+source_name,source_type,usage,license,note
+vietnamese_synthetic,self_created,Main Vietnamese training dataset,self-created,"Synthetic Vietnamese scam/safe/suspicious messages created for academic prototype"
+Mendeley SMS Phishing Dataset,public_dataset,Future public seed dataset,CC BY 4.0,"Use selected samples only; raw file stored separately; processed/adapted version must cite source"
+ReportSmishing IMC25,public_dataset,Future smishing seed dataset,CC BY 4.0,"Use selected samples only; raw file stored separately"
+UCI SMS Spam Collection,public_dataset,Future ham/spam baseline,public research dataset,"Use selected ham/spam samples for baseline and hard negatives"
+ChongLuaDao,reference_lookup,URL checking/reference only,third-party terms,"Do not redistribute full database without permission"

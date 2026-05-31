@@ -1,0 +1,35 @@
+PUBLIC DATASET SELECTION SUMMARY
+
+Total selected raw rows: 300
+Total adapted Vietnamese seed rows: 300
+
+By source:
+- mendeley_sms_phishing: 120
+- reportsmishing_imc25: 120
+- uci_sms_spam_collection: 60
+
+By mapped label:
+- SCAM: 200
+- SUSPICIOUS: 50
+- SAFE: 50
+
+By scam_type:
+- OTP_BANK: 99
+- PHISHING_LINK: 52
+- NONE: 50
+- PRIZE_GIFT: 38
+- FAKE_POLICE: 27
+- FAKE_SUPPORT: 15
+- EMERGENCY_MONEY: 10
+- LOAN_SCAM: 6
+- PAYMENT_SCAM: 3
+
+Selection rules:
+- Mendeley: top smishing/spam rows with scam-related keywords; selected ham hard-negatives that include sensitive terms.
+- ReportSmishing IMC25: quota-based selection from banking, delivery, government, telecom, hey mum/dad, and others.
+- UCI SMS Spam Collection: selected relevant spam as suspicious baseline and ham hard-negatives/safe baseline.
+- PII masking applied to URLs, emails, phone-like numbers, and long numeric identifiers in raw selected file.
+- The Vietnamese file is an adapted/synthetic seed version for training; keep the raw selected file as evidence of public-source selection.
+
+Suggested next step:
+- Copy public_adapted_vi_300.csv into backend/datasets/processed/public_adapted_vi.csv, then merge with vietnamese_synthetic_full.csv.
