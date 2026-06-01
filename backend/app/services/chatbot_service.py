@@ -126,8 +126,62 @@ def _parse_ai_json(text: str) -> Dict[str, Any]:
         return json.loads(match.group(0))
 
 
-async def analyze_text_with_ai(text: str, api_key: str, model: str) -> Dict[str, Any]:
-    fallback = analyze_text(text)
+def _verdict_from_scam_result(scam_result: Dict[str, Any]) -> str:
+    risk_level = str(scam_result.get("risk_level", "")).upper()
+    if risk_level == "HIGH":
+        return "danger"
+    if risk_level == "MEDIUM":
+        return "warning"
+    return "safe"
+
+
+def _fallback_from_scam_result(scam_result: Dict[str, Any]) -> Dict[str, Any]:
+    explanation = scam_result.get("explanation") or "Chưa có giải thích từ local AI detector."
+    recommended_action = scam_result.get("recommended_action") or "Hãy hỏi người thân hoặc tổ chức chính thức để xác minh."
+    triggered_rules = scam_result.get("triggered_rules") or []
+    verdict = _verdict_from_scam_result(scam_result)
+
+    matches = [
+        {
+            "keywords": [rule],
+            "response": recommended_action,
+            "type": verdict,
+        }
+        for rule in triggered_rules
+    ]
+
+    return {
+        "verdict": verdict,
+        "summary": explanation,
+        "matches": matches,
+        "recommended_action": recommended_action,
+        "ai_used": False,
+    }
+
+
+def _is_contradictory_ai_text(text: str, verdict: str) -> bool:
+    if verdict not in {"danger", "warning"}:
+        return False
+
+    normalized = text.lower()
+    contradictory_phrases = [
+        "không có dấu hiệu",
+        "không phát hiện",
+        "chưa thấy dấu hiệu",
+        "không thấy dấu hiệu",
+        "an toàn",
+        "bình thường",
+    ]
+    return any(phrase in normalized for phrase in contradictory_phrases)
+
+
+async def analyze_text_with_ai(
+    text: str,
+    api_key: str,
+    model: str,
+    scam_result: Dict[str, Any] | None = None,
+) -> Dict[str, Any]:
+    fallback = _fallback_from_scam_result(scam_result) if scam_result else analyze_text(text)
     if not api_key:
         return fallback
 
@@ -138,17 +192,39 @@ async def analyze_text_with_ai(text: str, api_key: str, model: str) -> Dict[str,
     # return fallback
     instructions = (
         "Always address the user as 'bác' and refer to yourself as 'cháu'. "
-        "Bạn là trợ lý cảnh báo lừa đảo cho người dùng Việt Nam. "
-        "Phân tích tin nhắn/tình huống đã được ẩn danh dữ liệu nhạy cảm. "
+        "Bạn là chatbot hỗ trợ người cao tuổi phòng chống lừa đảo. "
+        "Gemini chỉ đóng vai trò tạo phản hồi hội thoại tự nhiên. "
+        "Quyết định phát hiện lừa đảo được thực hiện bởi local AI model kết hợp rule-based detector. "
+        "Khi có kết quả local AI, không được phủ nhận hoặc hạ mức rủi ro của local AI. "
         "Chỉ trả về JSON hợp lệ với các field: verdict, summary, recommended_action. "
         "verdict chỉ được là safe, warning hoặc danger. "
-        "Nếu verdict là danger, recommended_action phải bắt đầu bằng 'NGUY HIỂM:', không dùng cụm 'CẢNH BÁO ĐỎ'. "
+        "Dùng tiếng Việt đơn giản, dễ hiểu cho người cao tuổi. "
+        "Không làm người dùng hoảng sợ. "
         "Không yêu cầu người dùng cung cấp OTP, mật khẩu, số tài khoản, CCCD."
     )
-    prompt = (
-        "Phân tích rủi ro lừa đảo của nội dung sau và trả lời ngắn, dễ hiểu:\n\n"
-        f"{redacted_text}"
-    )
+
+    if scam_result:
+        prompt = (
+            "Người dùng vừa gửi nội dung đã được ẩn danh dữ liệu nhạy cảm:\n"
+            f"\"{redacted_text}\"\n\n"
+            "Kết quả từ local AI scam detector:\n"
+            f"- label: {scam_result.get('label')}\n"
+            f"- risk_level: {scam_result.get('risk_level')}\n"
+            f"- risk_score: {scam_result.get('risk_score')}\n"
+            f"- scam_type: {scam_result.get('scam_type')}\n"
+            f"- explanation: {scam_result.get('explanation')}\n"
+            f"- recommended_action: {scam_result.get('recommended_action')}\n\n"
+            "Yêu cầu trả lời:\n"
+            "- Nếu risk_level là HIGH, hãy khuyên người dùng không cung cấp OTP, không chuyển tiền, không bấm link lạ.\n"
+            "- Nếu risk_level là MEDIUM, hãy khuyên người dùng xác minh thêm với người thân hoặc tổ chức chính thức.\n"
+            "- Nếu risk_level là LOW, trả lời bình thường nhưng vẫn nhắc người dùng cẩn thận nếu có yêu cầu tiền, OTP hoặc thông tin cá nhân.\n"
+            "- Không được nói rằng nội dung không có dấu hiệu lừa đảo nếu local AI đã trả risk_level HIGH hoặc MEDIUM."
+        )
+    else:
+        prompt = (
+            "Phân tích rủi ro lừa đảo của nội dung sau và trả lời ngắn, dễ hiểu:\n\n"
+            f"{redacted_text}"
+        )
 
     try:
         async with httpx.AsyncClient(timeout=20) as client:
@@ -178,12 +254,21 @@ async def analyze_text_with_ai(text: str, api_key: str, model: str) -> Dict[str,
         parts = gemini_response.get("candidates", [{}])[0].get("content", {}).get("parts", [])
         output_text = "\n".join(part.get("text", "") for part in parts if part.get("text")).strip()
         ai_payload = _parse_ai_json(output_text)
-        verdict = ai_payload.get("verdict") if ai_payload.get("verdict") in {"safe", "warning", "danger"} else fallback["verdict"]
+        verdict = fallback["verdict"] if scam_result else (
+            ai_payload.get("verdict") if ai_payload.get("verdict") in {"safe", "warning", "danger"} else fallback["verdict"]
+        )
+        summary = ai_payload.get("summary") or fallback["summary"]
+        recommended_action = ai_payload.get("recommended_action") or fallback.get("recommended_action")
+
+        if scam_result and _is_contradictory_ai_text(f"{summary}\n{recommended_action}", verdict):
+            summary = fallback["summary"]
+            recommended_action = fallback.get("recommended_action")
+
         return {
             "verdict": verdict,
-            "summary": ai_payload.get("summary") or fallback["summary"],
+            "summary": summary,
             "matches": fallback["matches"],
-            "recommended_action": ai_payload.get("recommended_action") or fallback.get("recommended_action"),
+            "recommended_action": recommended_action,
             "ai_used": True,
         }
     except Exception:

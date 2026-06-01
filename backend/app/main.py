@@ -5,15 +5,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy import inspect, text
 
+from app.api.v1.detect_scam import router as detect_scam_router
 from app.api.v1.router import api_router
 from app.core.config import get_settings
 from app.core.database import Base, engine
 from app import models
 
-
 settings = get_settings()
 Base.metadata.create_all(bind=engine)
-
 
 def ensure_user_oauth_columns() -> None:
     inspector = inspect(engine)
@@ -74,6 +73,7 @@ upload_path = Path(settings.upload_dir)
 upload_path.mkdir(parents=True, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=str(upload_path)), name="uploads")
 
+app.include_router(detect_scam_router)
 app.include_router(api_router)
 
 

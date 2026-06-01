@@ -17,7 +17,8 @@ router = APIRouter()
 async def analyze(request: TextAnalysisRequest, db: Session = Depends(get_db)) -> Any:
     """Analyze free text for scam indicators, using AI when configured."""
     settings = get_settings()
-    result = await analyze_text_with_ai(request.text, settings.gemini_api_key, settings.gemini_model)
+    scam_context = request.scam_result.model_dump() if request.scam_result else None
+    result = await analyze_text_with_ai(request.text, settings.gemini_api_key, settings.gemini_model, scam_context)
     return TextAnalysisResponse(
         verdict=result["verdict"],
         summary=result["summary"],

@@ -1,0 +1,75 @@
+{
+  "model_name": "TF-IDF word+char ngram + LogisticRegression",
+  "dataset": {
+    "train_rows": 1135,
+    "valid_rows": 242,
+    "test_rows": 246,
+    "train_full_rows": 1377
+  },
+  "test_metrics": {
+    "split": "test",
+    "accuracy": 0.983739837398374,
+    "labels": [
+      "SAFE",
+      "SUSPICIOUS",
+      "SCAM"
+    ],
+    "classification_report": {
+      "SAFE": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1-score": 1.0,
+        "support": 71.0
+      },
+      "SUSPICIOUS": {
+        "precision": 0.9534883720930233,
+        "recall": 0.9534883720930233,
+        "f1-score": 0.9534883720930233,
+        "support": 43.0
+      },
+      "SCAM": {
+        "precision": 0.9848484848484849,
+        "recall": 0.9848484848484849,
+        "f1-score": 0.9848484848484849,
+        "support": 132.0
+      },
+      "accuracy": 0.983739837398374,
+      "macro avg": {
+        "precision": 0.9794456189805026,
+        "recall": 0.9794456189805026,
+        "f1-score": 0.9794456189805026,
+        "support": 246.0
+      },
+      "weighted avg": {
+        "precision": 0.983739837398374,
+        "recall": 0.983739837398374,
+        "f1-score": 0.983739837398374,
+        "support": 246.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        71,
+        0,
+        0
+      ],
+      [
+        0,
+        41,
+        2
+      ],
+      [
+        0,
+        2,
+        130
+      ]
+    ]
+  },
+  "notes": [
+    "Model is a local baseline scam detector.",
+    "TF-IDF word n-grams capture keyword and phrase patterns.",
+    "Character n-grams improve robustness for no-diacritics, typos, abbreviations, and obfuscated text.",
+    "class_weight='balanced' is used to reduce class imbalance impact.",
+    "For scam-prevention use case, SCAM recall should be monitored carefully."
+  ]
+}

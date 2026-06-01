@@ -1,10 +1,11 @@
 from fastapi import APIRouter
 
-from app.api.v1 import admin, alerts, auth, history, lookup, reports, scam_database, stats, chat, trusted_contacts
+from app.api.v1 import admin, alerts, auth, detect_scam, history, lookup, reports, scam_database, stats, chat, trusted_contacts
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(auth.router)
 api_router.include_router(alerts.router)
+api_router.include_router(detect_scam.router)
 api_router.include_router(lookup.router)
 api_router.include_router(reports.router)
 api_router.include_router(history.router)

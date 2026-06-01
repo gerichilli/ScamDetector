@@ -1,0 +1,62 @@
+Vietnamese self-created long-context dataset summary
+{
+  "total": 300,
+  "label_counts": {
+    "SCAM": 180,
+    "SUSPICIOUS": 60,
+    "SAFE": 60
+  },
+  "scam_type_counts": {
+    "UNKNOWN": 60,
+    "NONE": 60,
+    "JOB_SCAM": 20,
+    "PHISHING_LINK": 18,
+    "PRIZE_GIFT": 18,
+    "DEEPFAKE_CALL": 16,
+    "INVESTMENT": 15,
+    "HEALTH_PRODUCT": 14,
+    "OTP_BANK": 14,
+    "FAKE_POLICE": 12,
+    "EMERGENCY_MONEY": 12,
+    "TRAVEL_COMBO": 11,
+    "FAKE_SUPPORT": 11,
+    "LOAN_SCAM": 10,
+    "ROMANCE_SCAM": 9
+  },
+  "region_counts": {
+    "NORTH": 80,
+    "STANDARD": 77,
+    "SOUTH": 73,
+    "CENTRAL": 70
+  },
+  "noise_counts": {
+    "NONE": 147,
+    "ABBREVIATION": 43,
+    "NO_DIACRITICS": 35,
+    "TYPO": 32,
+    "OBFUSCATION": 24,
+    "CODE_SWITCHING": 19
+  },
+  "split_counts": {
+    "train": 210,
+    "test": 45,
+    "valid": 45
+  },
+  "split_by_label": {
+    "SAFE": {
+      "test": 9,
+      "train": 42,
+      "valid": 9
+    },
+    "SCAM": {
+      "test": 27,
+      "train": 126,
+      "valid": 27
+    },
+    "SUSPICIOUS": {
+      "test": 9,
+      "train": 42,
+      "valid": 9
+    }
+  }
+}

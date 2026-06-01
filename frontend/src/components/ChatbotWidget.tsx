@@ -1,6 +1,8 @@
 import { Bot, BotMessageSquare, Mic, MicOff, Send, Upload, X } from "lucide-react";
 import { FormEvent, useEffect, useRef, useState } from "react";
 
+import { API_BASE_URL, detectScam, type ScamDetectionResult } from "../services/scamDetectionApi";
+
 type ChatMessage = {
   id: number;
   role: "assistant" | "user";
@@ -26,8 +28,8 @@ const initialMessages: ChatMessage[] = [
 
 function getDemoReply(text: string) {
   const normalized = text.toLowerCase();
-  if (normalized.includes("otp") || normalized.includes("mã xác thực")) {
-    return "NGUY HIỂM: Bác tuyệt đối không đọc mã OTP hoặc mã xác thực cho bất kỳ ai. Nếu đã lỡ đọc, bác hãy đổi mật khẩu và liên hệ ngân hàng ngay.";
+  if (normalized.includes("otp") || normalized.includes("mã xác thực") || normalized.includes("mã xác nhận")) {
+    return "NGUY HIỂM: Bác tuyệt đối không đọc mã OTP, mã xác thực hoặc mã xác nhận cho bất kỳ ai. Nếu đã lỡ đọc, bác hãy đổi mật khẩu và liên hệ ngân hàng ngay.";
   }
   if (normalized.includes("chuyển tiền") || normalized.includes("chuyển khoản")) {
     return "CẢNH BÁO: Bác không nên chuyển tiền khi chưa xác minh trực tiếp với người thân, ngân hàng hoặc cơ quan chính thức.";
@@ -60,11 +62,47 @@ function normalizeDangerText(text: string, tone: ChatMessage["tone"]) {
   return withoutWarningPrefix;
 }
 
-async function analyzeWithBackend(text: string): Promise<Pick<ChatMessage, "content" | "tone">> {
-  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/v1"}/chat/analyze`, {
+function getToneFromRiskLevel(riskLevel: string): ChatMessage["tone"] {
+  if (riskLevel === "HIGH") return "danger";
+  if (riskLevel === "MEDIUM") return "warning";
+  return "safe";
+}
+
+function buildRiskMessage(scamResult: ScamDetectionResult): Pick<ChatMessage, "content" | "tone"> {
+  const summary = [
+    `Risk level: ${scamResult.risk_level}`,
+    `Label: ${scamResult.label}`,
+    `Scam type: ${scamResult.scam_type}`,
+  ].join("\n");
+
+  if (scamResult.risk_level === "HIGH") {
+    return {
+      tone: "danger",
+      content: `CẢNH BÁO NGUY HIỂM\n\n${summary}\n\nLý do: ${scamResult.explanation}\n\nKhuyến nghị: ${scamResult.recommended_action}`,
+    };
+  }
+
+  if (scamResult.risk_level === "MEDIUM") {
+    return {
+      tone: "warning",
+      content: `Nội dung này có dấu hiệu đáng nghi.\n\n${summary}\n\nLý do: ${scamResult.explanation}\n\nKhuyến nghị: ${scamResult.recommended_action}`,
+    };
+  }
+
+  return {
+    tone: "safe",
+    content: `Chưa thấy dấu hiệu lừa đảo rõ ràng.\n\n${summary}\n\nLý do: ${scamResult.explanation}\n\nKhuyến nghị: ${scamResult.recommended_action}`,
+  };
+}
+
+async function analyzeWithBackend(
+  text: string,
+  scamResult?: ScamDetectionResult,
+): Promise<Pick<ChatMessage, "content" | "tone">> {
+  const response = await fetch(`${API_BASE_URL}/chat/analyze`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, scam_result: scamResult }),
   });
 
   if (!response.ok) {
@@ -80,7 +118,9 @@ async function analyzeWithBackend(text: string): Promise<Pick<ChatMessage, "cont
   const tone =
     data.verdict === "danger" || data.verdict === "warning" || data.verdict === "safe"
       ? data.verdict
-      : getMessageTone(reply);
+      : scamResult
+        ? getToneFromRiskLevel(scamResult.risk_level)
+        : getMessageTone(reply);
 
   return { content: normalizeDangerText(reply, tone), tone };
 }
@@ -89,7 +129,7 @@ async function analyzeImageWithBackend(file: File): Promise<Pick<ChatMessage, "c
   const formData = new FormData();
   formData.append("file", file);
 
-  const response = await fetch(`${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8000/api/v1"}/chat/analyze-image`, {
+  const response = await fetch(`${API_BASE_URL}/chat/analyze-image`, {
     method: "POST",
     body: formData,
   });
@@ -148,13 +188,22 @@ export function ChatbotWidget() {
     setMessages((current) => [
       ...current,
       { id: now, role: "user", content: text },
-      { id: now + 1, role: "assistant", content: "Cháu đang phân tích..." },
+      { id: now + 1, role: "assistant", content: "Cháu đang kiểm tra rủi ro..." },
     ]);
     setInput("");
 
     try {
-      const reply = await analyzeWithBackend(text);
-      setMessages((current) => [...current.slice(0, -1), { id: now + 2, role: "assistant", ...reply }]);
+      const scamResult = await detectScam(text);
+      const riskMessage = buildRiskMessage(scamResult);
+      setMessages((current) => [...current.slice(0, -1), { id: now + 2, role: "assistant", ...riskMessage }]);
+
+      try {
+        const reply = await analyzeWithBackend(text, scamResult);
+        setMessages((current) => [...current, { id: now + 3, role: "assistant", ...reply }]);
+      } catch {
+        const reply = getDemoReply(text);
+        setMessages((current) => [...current, { id: now + 3, role: "assistant", content: reply, tone: getMessageTone(reply) }]);
+      }
     } catch {
       const reply = getDemoReply(text);
       setMessages((current) => [...current.slice(0, -1), { id: now + 3, role: "assistant", content: reply, tone: getMessageTone(reply) }]);

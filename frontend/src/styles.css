@@ -755,6 +755,7 @@
 
 .chatbot-message-assistant p {
   color: inherit !important;
+  white-space: pre-line;
 }
 
 .chatbot-message-user {
