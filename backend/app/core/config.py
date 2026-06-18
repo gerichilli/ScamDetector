@@ -19,7 +19,7 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://localhost:5174"
     upload_dir: str = DEFAULT_UPLOAD_DIR
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.0-flash"
+    gemini_model: str = "gemini-3.5-flash"
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = "http://localhost:8000/api/v1/auth/google/callback"
