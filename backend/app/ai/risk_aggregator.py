@@ -13,12 +13,17 @@ def aggregate_risk(rule_result: Dict[str, Any], ml_result: Dict[str, Any]) -> Di
     rule_score = float(rule_result.get("rule_score", 0.0))
     model_score = float(ml_result.get("model_score", 0.0))
     model_label = ml_result.get("model_label", "SAFE")
+    class_scores = ml_result.get("class_scores") or {}
+    max_class_score = max(class_scores.values()) if class_scores else 1.0
+    model_uncertain = max_class_score < 0.60
 
     # Kết hợp rule + model
     weighted_score = 0.5 * rule_score + 0.5 * model_score
 
     # Không để mất cảnh báo khi model rất chắc SCAM
     final_score = max(weighted_score, model_score if model_label == "SCAM" else weighted_score)
+    if model_uncertain:
+        final_score = max(final_score, 0.70)
     final_score = min(final_score, 1.0)
 
     risk_level = get_risk_level(final_score)
@@ -37,4 +42,5 @@ def aggregate_risk(rule_result: Dict[str, Any], ml_result: Dict[str, Any]) -> Di
         "risk_level": risk_level,
         "risk_score": round(float(final_score), 4),
         "scam_type": scam_type,
+        "model_uncertain": model_uncertain,
     }

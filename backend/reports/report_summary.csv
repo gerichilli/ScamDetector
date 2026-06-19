@@ -1,5 +1,5 @@
 ﻿Class,Precision,Recall,F1-score,Support
-SAFE,1.0,1.0,1.0,71
-SUSPICIOUS,0.9535,0.9535,0.9535,43
-SCAM,0.9848,0.9848,0.9848,132
-Accuracy,,,0.9837,246
+SAFE,1.0,1.0,1.0,69
+SUSPICIOUS,1.0,1.0,1.0,39
+SCAM,1.0,1.0,1.0,117
+Accuracy,,,1.0,225

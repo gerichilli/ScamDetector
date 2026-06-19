@@ -1,11 +1,26 @@
 import re
+import unicodedata
+
+
+def _strip_obfuscation_chars(text: str) -> str:
+    cleaned_chars = []
+    for char in text:
+        category = unicodedata.category(char)
+        if category in {"Cf", "Cs"}:
+            continue
+        if category in {"Cc", "So", "Sk"}:
+            cleaned_chars.append(" ")
+            continue
+        cleaned_chars.append(char)
+    return "".join(cleaned_chars)
 
 
 def normalize_text(text: str) -> str:
     if not text:
         return ""
 
-    text = str(text).strip()
+    text = unicodedata.normalize("NFKC", str(text))
+    text = _strip_obfuscation_chars(text).strip()
     text = re.sub(r"\s+", " ", text)
 
     # Mask dữ liệu nhạy cảm nếu user nhập thật

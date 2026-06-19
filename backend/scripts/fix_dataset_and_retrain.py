@@ -2,10 +2,10 @@
 fix_dataset_and_retrain.py
 ==========================
 Chạy script này để:
-1. Lọc bỏ 123 mẫu nguồn public-adapted (từ tiếng Anh)
-2. Tạo lại dataset_clean.csv
-3. Tự động re-split train/valid/test
-4. Retrain model với dataset sạch
+1. Xác nhận dataset đã loại bỏ hoàn toàn public-adapted sources
+2. Tạo lại dataset_clean.csv từ merged Vietnamese-only dataset
+3. Dùng lại split train/valid/test đã chia theo base_case_id
+4. Retrain model v2 với dataset sạch
 5. So sánh metrics trước/sau
 
 Cách chạy:
@@ -24,19 +24,22 @@ import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-from sklearn.model_selection import train_test_split
 from sklearn.pipeline import FeatureUnion, Pipeline
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 DATASET_DIR = BASE_DIR / "datasets" / "processed"
 ARTIFACT_DIR = BASE_DIR / "ml_artifacts"
 REPORT_DIR = BASE_DIR / "reports"
+TEST_SUITE_DIR = BASE_DIR / "datasets" / "test_suites"
 
 FULL_DATASET_PATH = DATASET_DIR / "scam_dataset_full.csv"
 CLEAN_DATASET_PATH = DATASET_DIR / "scam_dataset_clean.csv"
 CLEAN_TRAIN_PATH = DATASET_DIR / "train_clean.csv"
 CLEAN_VALID_PATH = DATASET_DIR / "valid_clean.csv"
 CLEAN_TEST_PATH = DATASET_DIR / "test_clean.csv"
+TRAIN_PATH = DATASET_DIR / "train.csv"
+VALID_PATH = DATASET_DIR / "valid.csv"
+TEST_PATH = DATASET_DIR / "test.csv"
 
 # Các source bị loại (dịch từ tiếng Anh)
 REMOVED_SOURCES = [
@@ -64,10 +67,16 @@ def filter_dataset():
     removed = df[df["source"].isin(REMOVED_SOURCES)]
     clean_df = df[~df["source"].isin(REMOVED_SOURCES)].copy()
 
-    print(f"\n>>> Loại bỏ {len(removed)} mẫu từ nguồn public-adapted:")
+    print(f"\n>>> Public-adapted còn trong merged dataset: {len(removed)} mẫu")
     for src in REMOVED_SOURCES:
         count = len(removed[removed["source"] == src])
         print(f"    - {src}: {count} mẫu")
+
+    if len(removed) > 0:
+        raise ValueError(
+            "Merged dataset vẫn còn public-adapted rows. "
+            "Chạy scripts/merge_datasets.py sau khi bỏ public_adapted_vi.csv khỏi DATASET_FILES."
+        )
 
     print(f"\nSố mẫu còn lại: {len(clean_df)}")
     print("\nPhân bổ label sau khi lọc:")
@@ -79,20 +88,27 @@ def filter_dataset():
     return clean_df
 
 
-# ─── 2. RE-SPLIT ───────────────────────────────────────────────────────────────
+# ─── 2. LOAD CLEAN SPLITS ─────────────────────────────────────────────────────
 
-def resplit_dataset(clean_df):
+def load_clean_splits():
     print("\n" + "=" * 60)
-    print("STEP 2: RE-SPLIT TRAIN / VALID / TEST")
+    print("STEP 2: LOAD TRAIN / VALID / TEST CLEAN SPLITS")
     print("=" * 60)
 
-    # Stratified split: 70% train, 15% valid, 15% test
-    train_df, temp_df = train_test_split(
-        clean_df, test_size=0.30, stratify=clean_df["label"], random_state=42
-    )
-    valid_df, test_df = train_test_split(
-        temp_df, test_size=0.50, stratify=temp_df["label"], random_state=42
-    )
+    train_df = pd.read_csv(TRAIN_PATH)
+    valid_df = pd.read_csv(VALID_PATH)
+    test_df = pd.read_csv(TEST_PATH)
+
+    for name, df in [("train", train_df), ("valid", valid_df), ("test", test_df)]:
+        leaked = df[df["source"].isin(REMOVED_SOURCES)]
+        if len(leaked) > 0:
+            raise ValueError(f"{name}.csv còn {len(leaked)} public-adapted rows")
+
+    train_like_base_cases = set(pd.concat([train_df, valid_df])["base_case_id"].astype(str))
+    test_base_cases = set(test_df["base_case_id"].astype(str))
+    overlap = train_like_base_cases & test_base_cases
+    if overlap:
+        raise ValueError(f"Clean test split leaks {len(overlap)} base_case_id values from train/valid")
 
     print(f"\nTrain: {len(train_df)} mẫu")
     print(train_df["label"].value_counts().to_string())
@@ -105,7 +121,7 @@ def resplit_dataset(clean_df):
     valid_df.to_csv(CLEAN_VALID_PATH, index=False, encoding="utf-8-sig")
     test_df.to_csv(CLEAN_TEST_PATH, index=False, encoding="utf-8-sig")
 
-    print(f"\n✅ Đã lưu train/valid/test mới (clean)")
+    print(f"\n✅ Đã lưu bản sao train/valid/test clean")
 
     return train_df, valid_df, test_df
 
@@ -168,6 +184,8 @@ def retrain_and_evaluate(train_df, valid_df, test_df):
     print(labels)
     print(cm)
 
+    responsible_ai_metrics = evaluate_responsible_ai_suites(model, train_df, valid_df)
+
     # Save model + metrics
     model_path = ARTIFACT_DIR / "scam_detector_pipeline_v2_clean.joblib"
     joblib.dump(model, model_path)
@@ -177,7 +195,7 @@ def retrain_and_evaluate(train_df, valid_df, test_df):
         "model_name": "TF-IDF word+char ngram + LogisticRegression (Clean Dataset)",
         "dataset": {
             "total_after_filter": len(train_df) + len(valid_df) + len(test_df),
-            "removed_public_adapted": 123,
+            "public_adapted_rows_in_training_dataset": 0,
             "train_rows": len(train_df),
             "valid_rows": len(valid_df),
             "test_rows": len(test_df),
@@ -189,9 +207,11 @@ def retrain_and_evaluate(train_df, valid_df, test_df):
             "classification_report": report_dict,
             "confusion_matrix": cm.tolist(),
         },
+        "responsible_ai_test_suites": responsible_ai_metrics,
         "notes": [
-            "Dataset cleaned: removed 123 samples adapted from English datasets.",
-            "Replaced with Vietnamese-only sources for better contextual accuracy.",
+            "Dataset cleaned at merge step: public-adapted English-derived sources are excluded entirely.",
+            "Splits are grouped by base_case_id to avoid train/test leakage across variants.",
+            "Robustness suite is generated from held-out test rows with new adversarial obfuscation transforms.",
             "SCAM recall is the primary metric — zero miss rate for HIGH risk scams.",
         ],
     }
@@ -204,6 +224,47 @@ def retrain_and_evaluate(train_df, valid_df, test_df):
     print(f"✅ Metrics saved: {metrics_path}")
 
     return model, metrics
+
+
+def evaluate_responsible_ai_suites(model, train_df, valid_df):
+    train_like_base_cases = set(pd.concat([train_df, valid_df])["base_case_id"].astype(str))
+    suite_specs = {
+        "fairness": TEST_SUITE_DIR / "fairness_test.csv",
+        "robustness": TEST_SUITE_DIR / "robustness_test.csv",
+    }
+    results = {}
+
+    for suite_name, suite_path in suite_specs.items():
+        if not suite_path.exists():
+            continue
+
+        suite_df = pd.read_csv(suite_path)
+        overlap = len(set(suite_df["base_case_id"].astype(str)) & train_like_base_cases)
+        y_true = suite_df["label"].astype(str)
+        y_pred = model.predict(suite_df["text"].astype(str))
+        suite_accuracy = accuracy_score(y_true, y_pred)
+
+        by_noise = {}
+        if "noise_type" in suite_df.columns:
+            for noise_type, group in suite_df.groupby("noise_type"):
+                group_pred = model.predict(group["text"].astype(str))
+                by_noise[str(noise_type)] = accuracy_score(group["label"].astype(str), group_pred)
+
+        by_region = {}
+        if "region_variant" in suite_df.columns:
+            for region, group in suite_df.groupby("region_variant"):
+                group_pred = model.predict(group["text"].astype(str))
+                by_region[str(region)] = accuracy_score(group["label"].astype(str), group_pred)
+
+        results[suite_name] = {
+            "rows": len(suite_df),
+            "base_case_overlap_with_train_valid": overlap,
+            "accuracy": suite_accuracy,
+            "accuracy_by_noise_type": by_noise,
+            "accuracy_by_region_variant": by_region,
+        }
+
+    return results
 
 
 # ─── 5. COMPARE V1 vs V2 ───────────────────────────────────────────────────────
@@ -249,8 +310,8 @@ def compare_versions():
 # ─── MAIN ──────────────────────────────────────────────────────────────────────
 
 def main():
-    clean_df = filter_dataset()
-    train_df, valid_df, test_df = resplit_dataset(clean_df)
+    filter_dataset()
+    train_df, valid_df, test_df = load_clean_splits()
     retrain_and_evaluate(train_df, valid_df, test_df)
     compare_versions()
 

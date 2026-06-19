@@ -2,7 +2,7 @@
   "model_name": "TF-IDF word+char ngram + LogisticRegression (Clean Dataset)",
   "dataset": {
     "total_after_filter": 1500,
-    "removed_public_adapted": 123,
+    "public_adapted_rows_in_training_dataset": 0,
     "train_rows": 1050,
     "valid_rows": 225,
     "test_rows": 225
@@ -70,9 +70,48 @@
       ]
     ]
   },
+  "responsible_ai_test_suites": {
+    "fairness": {
+      "rows": 188,
+      "base_case_overlap_with_train_valid": 0,
+      "accuracy": 1.0,
+      "accuracy_by_noise_type": {
+        "ABBREVIATION": 1.0,
+        "CODE_SWITCHING": 1.0,
+        "LONG_CONTEXT": 1.0,
+        "MIXED_INTENT": 1.0,
+        "NONE": 1.0,
+        "NO_DIACRITICS": 1.0,
+        "OBFUSCATION": 1.0,
+        "TYPO": 1.0
+      },
+      "accuracy_by_region_variant": {
+        "CENTRAL": 1.0,
+        "NORTH": 1.0,
+        "SOUTH": 1.0
+      }
+    },
+    "robustness": {
+      "rows": 675,
+      "base_case_overlap_with_train_valid": 0,
+      "accuracy": 0.8385185185185186,
+      "accuracy_by_noise_type": {
+        "EMOJI_PUNCT": 1.0,
+        "FULLWIDTH_ASCII": 0.52,
+        "ZERO_WIDTH": 0.9955555555555555
+      },
+      "accuracy_by_region_variant": {
+        "CENTRAL": 0.8431372549019608,
+        "NORTH": 0.8133333333333334,
+        "SOUTH": 0.8709677419354839,
+        "STANDARD": 0.8288288288288288
+      }
+    }
+  },
   "notes": [
-    "Dataset cleaned: removed 123 samples adapted from English datasets.",
-    "Replaced with Vietnamese-only sources for better contextual accuracy.",
+    "Dataset cleaned at merge step: public-adapted English-derived sources are excluded entirely.",
+    "Splits are grouped by base_case_id to avoid train/test leakage across variants.",
+    "Robustness suite is generated from held-out test rows with new adversarial obfuscation transforms.",
     "SCAM recall is the primary metric — zero miss rate for HIGH risk scams."
   ]
 }

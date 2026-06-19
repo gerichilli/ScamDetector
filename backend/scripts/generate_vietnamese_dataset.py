@@ -554,18 +554,22 @@ def main():
     write_csv(PROCESSED_DIR / "valid.csv", valid_rows)
     write_csv(PROCESSED_DIR / "test.csv", test_rows)
 
+    # Test suites chỉ lấy test split để tránh train/valid leakage giữa các
+    # noise/region variants có cùng base_case_id.
+    test_only_rows = [r for r in rows if r["split"] == "test"]
+
     fairness_rows = [
-        r for r in rows
+        r for r in test_only_rows
         if r["region_variant"] in ["NORTH", "CENTRAL", "SOUTH"]
     ][:150]
 
     robustness_rows = [
-        r for r in rows
+        r for r in test_only_rows
         if r["noise_type"] != "NONE"
     ][:150]
 
     explainability_rows = [
-        r for r in rows
+        r for r in test_only_rows
         if r["label"] in ["SCAM", "SUSPICIOUS"] and r["evidence_span"]
     ][:100]
 

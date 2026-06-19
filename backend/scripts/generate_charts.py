@@ -64,10 +64,10 @@ def load_data():
     full_df = pd.read_csv(DATASET_DIR / "scam_dataset_full.csv")
     test_df = pd.read_csv(DATASET_DIR / "test.csv")
 
-    with open(ARTIFACT_DIR / "metrics_v1.json", "r", encoding="utf-8") as f:
+    with open(ARTIFACT_DIR / "metrics_v2_clean.json", "r", encoding="utf-8") as f:
         metrics = json.load(f)
 
-    model = joblib.load(ARTIFACT_DIR / "scam_detector_pipeline_v1.joblib")
+    model = joblib.load(ARTIFACT_DIR / "scam_detector_pipeline_v2_clean.joblib")
 
     # Fairness + robustness test suites
     fairness_path = BASE_DIR / "datasets" / "test_suites" / "fairness_test.csv"
@@ -93,7 +93,7 @@ def plot_label_distribution(full_df):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 12,
                 f"{val}\n({pct:.1f}%)", ha="center", va="bottom", fontsize=11, fontweight="bold")
 
-    ax.set_title("Phân bổ nhãn trong Dataset (n=1,623)")
+    ax.set_title(f"Phân bổ nhãn trong Dataset (n={int(counts.sum()):,})")
     ax.set_ylabel("Số mẫu")
     ax.set_ylim(0, max(counts.values) * 1.2)
     ax.spines["top"].set_visible(False)
@@ -128,7 +128,7 @@ def plot_source_distribution(full_df):
         ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 5,
                 str(val), ha="center", va="bottom", fontsize=10, fontweight="bold")
 
-    ax.set_title("Phân bổ nguồn dữ liệu\n(Đỏ = nguồn public-adapted cần loại bỏ)")
+    ax.set_title("Phân bổ nguồn dữ liệu\n(Dataset clean không include public-adapted)")
     ax.set_ylabel("Số mẫu")
     ax.set_ylim(0, max(counts.values) * 1.2)
     ax.spines["top"].set_visible(False)
